@@ -450,3 +450,14 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+
+## MY IGNORE BEGIN
+/cocos2d
+/build
+/proj.android/**
+/proj.ios_mac/**
+/proj.linux/**
+/proj.win32/**
+!/Classes/**
+!/Resouces/**
