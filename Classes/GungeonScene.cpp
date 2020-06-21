@@ -22,7 +22,7 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#include "GungeonWorld.h"
+#include "GungeonScene.h"
 #include "SimpleAudioEngine.h"
 
 USING_NS_CC;

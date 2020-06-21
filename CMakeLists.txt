@@ -50,11 +50,11 @@ endif()
 # add cross-platforms source files and header files 
 list(APPEND GAME_SOURCE
      Classes/AppDelegate.cpp
-     Classes/GungeonWorld.cpp
+     Classes/GungeonScene.cpp
      )
 list(APPEND GAME_HEADER
      Classes/AppDelegate.h
-     Classes/GungeonWorld.h
+     Classes/GungeonScene.h
      )
 
 # ADD external libs
