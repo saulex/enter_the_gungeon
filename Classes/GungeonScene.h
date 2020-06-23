@@ -26,22 +26,28 @@
 #define __GUNGEON_WORLD_SCENE_H__
 
 #include "cocos2d.h"
+#include <Camera.hpp>
+#include <Character.hpp>
+#include <Map.hpp>
 
-class GungeonWorld : public cocos2d::Scene
-{
+namespace etg {
+
+class GungeonWorld : public cocos2d::Scene {
 public:
     static cocos2d::Scene* createScene();
 
     virtual bool init();
-    
-    // a selector callback
-    void menuCloseCallback(cocos2d::Ref* pSender);
-    
+    void update(float delta) override;
+
     // implement the "static create()" method manually
     CREATE_FUNC(GungeonWorld);
 
-private:
-    Node* camera_layer;
+protected:
+    etg::Camera* camera_node;
+    etg::Map* map;
+    etg::Player* player;
+    EventListenerPhysicsContact* contact_listener;
 };
 
+}
 #endif // __GUNGEON_WORLD_SCENE_H__

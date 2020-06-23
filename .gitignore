@@ -455,6 +455,7 @@ dkms.conf
 ## MY IGNORE BEGIN
 /cocos2d
 /build
+/external/my_boost
 /proj.android/**
 /proj.ios_mac/**
 /proj.linux/**

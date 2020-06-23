@@ -51,16 +51,27 @@ endif()
 list(APPEND GAME_SOURCE
      Classes/AppDelegate.cpp
      Classes/GungeonScene.cpp
+     Classes/Camera.cpp
+     Classes/Map.cpp
+     Classes/Character.cpp
      )
 list(APPEND GAME_HEADER
      Classes/AppDelegate.h
      Classes/GungeonScene.h
+     Classes/Camera.hpp
+     Classes/Map.hpp
+     Classes/Character.hpp
+     Classes/Status.hpp
+     Classes/config.hpp
      )
 
 # ADD external libs
 add_subdirectory(external/cocos_my_utils)
+# add_subdirectory(external/my_boost)
 list(APPEND EXTERNAL_LIBS_PRIVATE
-     cocos_my_utils)
+     cocos_my_utils
+     #my_boost
+     )
 
 if(ANDROID)
     # change APP_NAME to the share library name for Android, it's value depend on AndroidManifest.xml
@@ -133,6 +144,7 @@ target_link_libraries(${APP_NAME}
 target_include_directories(${APP_NAME}
         PRIVATE Classes
         PRIVATE ${COCOS2DX_ROOT_PATH}/cocos/audio/include/
+        # PRIVATE external/my_boost/include/  # UGLY USAGE HERE
 )
 
 # mark app resources
@@ -155,5 +167,9 @@ endif()
 
 if(LINUX OR WINDOWS)
     set(APP_RES_DIR "$<TARGET_FILE_DIR:${APP_NAME}>/Resources")
-    cocos_copy_target_res(${APP_NAME} COPY_TO ${APP_RES_DIR} FOLDERS ${GAME_RES_FOLDER})
+    # MY COPY
+    # cocos_copy_target_res(${APP_NAME} COPY_TO ${APP_RES_DIR} FOLDERS ${GAME_RES_FOLDER})
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E copy_directory
+                       "${CMAKE_CURRENT_LIST_DIR}/Resources" ${APP_RES_DIR})
 endif()

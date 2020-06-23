@@ -35,6 +35,32 @@ bool contains(const std::set<T>& super, const std::set<T>& sub)
     return true;
 }
 
+void move_by(cocos2d::Node* node, const cocos2d::Vec2& delta)
+{
+    node->setPosition(node->getPosition() + delta);
+}
+
+cocos2d::Vec2 dot(const cocos2d::Vec2& a, const cocos2d::Vec2& b)
+{
+    return { a.x * b.x, a.y * b.y };
+}
+
+std::string v2s(const cocos2d::Vec2& a)
+{
+    return "(" + std::to_string(a.x) + ","
+        + std::to_string(a.y) + ")";
+}
+
+cocos2d::Vec2 v_size()
+{
+    return cocos2d::Director::getInstance()->getVisibleSize();
+}
+
+bool veq(const cocos2d::Vec2& a, const cocos2d::Vec2& b)
+{
+    return (int(a.x) == int(b.x)) && (int(a.y) == int(b.y));
+}
+
 }
 
 #endif //COCOS_MY_UTILS_HPP
