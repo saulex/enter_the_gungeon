@@ -1,6 +1,8 @@
 #include <Map.hpp>
 #include <my_utils.hpp>
 
+using namespace myutl;
+
 namespace etg {
 
 Map* Map::create(const std::string& tmxFile)
@@ -82,45 +84,73 @@ float Map::pos_to_order(const Vec2& pos)
 
 void Map::update_body()
 {
-    auto body = PhysicsBody::create();
     auto map_center = getContentSize() / 2.0;
-
-    for (auto& child : _children) {
-        TMXLayer* layer = dynamic_cast<TMXLayer*>(child);
-        if (!layer || !layer->isVisible()) {
-            continue;
-        }
-        for (int x : myutl::range(getMapSize().width)) {
-            for (int y : myutl::range(getMapSize().height)) {
-                /*
-                 * 0 0 0
-                 * 1 1 1
-                 * 2 2 2
-                 */
-                auto tile = layer->getTileAt(Vec2(x, y));
-                auto tile_gid = layer->getTileGIDAt(Vec2(x, y));
-                auto is_walkable = (base_room_walkable_gid.count(tile_gid) == 1);
-                if (!tile || is_walkable) {
-                    continue;
-                }
-                auto tile_center_pos = tile->getPosition() + 0.5 * tile->getContentSize();
-                auto shape = PhysicsShapeEdgeBox::create(
-                    tile->getContentSize(),
-                    PhysicsMaterial(10000, 0, 10000),
-                    0,
-                    tile_center_pos - map_center);
-                shape->setContactTestBitmask(0xFFFFFFFF);
-                shape->setTag(TAG::wall_body);
-                body->addShape(shape, false);
-                //body->addShape(PhysicsShapeBox::create(tile->getBoundingBox()));
-            }
-        }
-    }
-
-    if (wall_body) {
-        this->removeComponent(wall_body);
-    }
+    // physics body
+    auto body = PhysicsBody::create();
+    // like a sensor
+    body->setRotationEnable(false);
     body->setDynamic(false);
+    // TODO ugly design here
+    auto base_wall_shape = PhysicsShapeEdgeBox::create(
+        Size(getContentSize().width - 1.5 * getTileSize().width,
+            getContentSize().height - 3.25 * getTileSize().height),
+        // getContentSize(),
+        PHYSICSSHAPE_MATERIAL_DEFAULT,
+        0,
+        Vec2(0, -0.75 * getTileSize().height));
+    base_wall_shape->setContactTestBitmask(int(C_MASK::character) | int(C_MASK::wall));
+    base_wall_shape->setCategoryBitmask(int(C_MASK::wall));
+    body->addShape(base_wall_shape);
+    //
+    for (int i : range(3)) {
+        auto extern_wall = PhysicsShapeEdgeBox::create(
+            Size(getContentSize().width - (1.5 - 0.25 * i) * getTileSize().width,
+                getContentSize().height - (3 - 0.25 * i) * getTileSize().height),
+            // getContentSize(),
+            PHYSICSSHAPE_MATERIAL_DEFAULT,
+            0,
+            Vec2(0, -0.75 * getTileSize().height));
+        extern_wall->setContactTestBitmask(int(C_MASK::character) | int(C_MASK::wall));
+        extern_wall->setCategoryBitmask(int(C_MASK::wall));
+        body->addShape(extern_wall);
+    }
+    //for (auto& child : _children) {
+    //    TMXLayer* layer = dynamic_cast<TMXLayer*>(child);
+    //    if (!layer || !layer->isVisible()) {
+    //        continue;
+    //    }
+    //    /*
+    //     * 0 0 0
+    //     * 1 1 1
+    //     * 2 2 2
+    //     */
+    //    for (int x : myutl::range(getMapSize().width)) {
+    //        for (int y : myutl::range(getMapSize().height)) {
+    //            auto tile = layer->getTileAt(Vec2(x, y));
+    //            auto tile_gid = layer->getTileGIDAt(Vec2(x, y));
+    //            auto is_walkable = (base_room_walkable_gid.count(tile_gid) == 1);
+    //            if (!tile || is_walkable) {
+    //                continue;
+    //            }
+    //            auto tile_center_pos = tile->getPosition() + 0.5 * tile->getContentSize();
+    //            // physics body
+    //            auto shape = PhysicsShapeEdgeBox::create(
+    //                Size(dot(tile->getContentSize(), { 1.0, 1.0 })),
+    //                PHYSICSSHAPE_MATERIAL_DEFAULT,
+    //                0,
+    //                tile_center_pos - map_center);
+
+    //            // Contact Event
+    //            shape->setContactTestBitmask(int(C_MASK::character) | int(C_MASK::wall));
+    //            shape->setCategoryBitmask(int(C_MASK::wall));
+    //            body->addShape(shape, false);
+    //            //body->addShape(PhysicsShapeBox::create(tile->getBoundingBox()));
+    //        }
+    //    }
+    //}
+    // reset body
+    if (wall_body)
+        this->removeComponent(wall_body);
     wall_body = body;
     this->addComponent(wall_body);
 }

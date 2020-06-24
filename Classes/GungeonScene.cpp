@@ -67,91 +67,7 @@ bool GungeonWorld::init()
     // Physics world
     getPhysicsWorld()->setGravity({ 0, 0 });
     getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
-    // add contact listener
-    contact_listener = EventListenerPhysicsContact::create();
-    contact_listener->onContactBegin = [&](PhysicsContact& contact) -> bool {
-        auto a = contact.getShapeA();
-        auto b = contact.getShapeB();
-        auto normal = contact.getContactData()->normal;
-        //if (b->getTag() == TAG::player_body) {
-        //    auto c = a;
-        //    a = b;
-        //    b = c;
-        //}
-        auto log_s = myutl::v2s(contact.getContactData()->normal);
-
-        if (a->getTag() == TAG::player_body && b->getTag() == TAG::wall_body) {
-            for (int i = 0; i < DIR::DIR_END; i++) {
-                if (myutl::veq(normal, d2v(DIR(i)))) {
-                    player->contact_face[DIR(i)] = true;
-                }
-            }
-            //if (myutl::veq(normal, { 1, 0 })) {
-            //    player->contact_face[DIR::R] = true;
-            //} else if (myutl::veq(normal, { -1, 0 })) {
-            //    player->contact_face[DIR::L] = true;
-            //} else if (myutl::veq(normal, { 0, 1 })) {
-            //    player->contact_face[DIR::U] = true;
-            //} else if (myutl::veq(normal, { 0, -1 })) {
-            //    player->contact_face[DIR::D] = true;
-            //}
-            log_s += "A: player, B: tile";
-        }
-        if (b->getTag() == TAG::player_body && a->getTag() == TAG::wall_body) {
-            for (int i = 0; i < DIR::DIR_END; i++) {
-                if (myutl::veq(-normal, d2v(DIR(i)))) {
-                    player->contact_face[DIR(i)] = true;
-                }
-            }
-
-            //if (myutl::veq(normal, { 1, 0 })) {
-            //    player->contact_face[DIR::L] = true;
-            //} else if (myutl::veq(normal, { -1, 0 })) {
-            //    player->contact_face[DIR::R] = true;
-            //} else if (myutl::veq(normal, { 0, 1 })) {
-            //    player->contact_face[DIR::D] = true;
-            //} else if (myutl::veq(normal, { 0, -1 })) {
-            //    player->contact_face[DIR::U] = true;
-            //}
-            log_s += "A: tile, B: player";
-        }
-        log(log_s.c_str());
-        return true;
-    };
-
-    contact_listener->onContactSeparate = [&](PhysicsContact& contact) {
-        auto a = contact.getShapeA();
-        auto b = contact.getShapeB();
-        auto normal = contact.getContactData()->normal;
-        //if (b->getTag() == TAG::player_body) {
-        //    auto c = a;
-        //    a = b;
-        //    b = c;
-        //}
-        auto log_s = myutl::v2s(contact.getContactData()->normal);
-
-        if (a->getTag() == TAG::player_body && b->getTag() == TAG::wall_body) {
-            for (int i = 0; i < DIR::DIR_END; i++) {
-                if (myutl::veq(normal, d2v(DIR(i)))) {
-                    player->contact_face[DIR(i)] = false;
-                }
-            }
-            log_s += "A: player, B: tile";
-        }
-        if (b->getTag() == TAG::player_body && a->getTag() == TAG::wall_body) {
-            for (int i = 0; i < DIR::DIR_END; i++) {
-                if (myutl::veq(-normal, d2v(DIR(i)))) {
-                    player->contact_face[DIR(i)] = false;
-                }
-            }
-            log_s += "A: tile, B: player";
-        }
-        log_s += "[end]";
-        log(log_s.c_str());
-        return true;
-    };
-    _eventDispatcher->addEventListenerWithSceneGraphPriority(contact_listener, this);
-
+    getPhysicsWorld()->setUpdateRate(2);
     // make update() working
     scheduleUpdate();
     return true;
@@ -162,4 +78,26 @@ void GungeonWorld::update(float delta)
     player->setLocalZOrder(map->pos_to_order(player->getPosition()));
 }
 
+void GungeonWorld::set_contact_listener()
+{
+    // add contact listener
+    contact_listener = EventListenerPhysicsContact::create();
+
+    contact_listener->onContactBegin = [&](PhysicsContact& c) -> bool {
+        auto a = c.getShapeA();
+        auto b = c.getShapeB();
+        for (auto& shape : { a, b }) {
+            if (shape->getCategoryBitmask() & int(C_MASK::character)) {
+
+            }
+        }
+        return true;
+    };
+
+    contact_listener->onContactSeparate = [&](PhysicsContact& c) -> bool {
+        return true;
+    };
+
+    _eventDispatcher->addEventListenerWithSceneGraphPriority(contact_listener, this);
+}
 }

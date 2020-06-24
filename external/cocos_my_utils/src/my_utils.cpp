@@ -1,6 +1,7 @@
 #ifndef COCOS_MY_UTILS_HPP
 #define COCOS_MY_UTILS_HPP
 
+#include <math.h>
 #include <my_utils.hpp>
 #include <stdexcept>
 
@@ -58,7 +59,30 @@ cocos2d::Vec2 v_size()
 
 bool veq(const cocos2d::Vec2& a, const cocos2d::Vec2& b)
 {
-    return (int(a.x) == int(b.x)) && (int(a.y) == int(b.y));
+    const float e = 1e-5;
+    return abs(a.x - b.x) < e && abs(a.y - b.y) < e;
+}
+
+cocos2d::Vec2 d2v(DIR d)
+{
+    if (d == DIR::E)
+        return { 0, 0 };
+    if (d == DIR::U)
+        return { 0, 1 };
+    if (d == DIR::D)
+        return { 0, -1 };
+    if (d == DIR::L)
+        return { -1, 0 };
+    if (d == DIR::R)
+        return { 1, 0 };
+    if (d == DIR::UL)
+        return { -1, 1 };
+    if (d == DIR::UR)
+        return { 1, 1 };
+    if (d == DIR::DL)
+        return { -1, -1 };
+    if (d == DIR::DR)
+        return { 1, -1 };
 }
 
 }

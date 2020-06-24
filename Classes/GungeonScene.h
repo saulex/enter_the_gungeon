@@ -46,7 +46,9 @@ protected:
     etg::Camera* camera_node;
     etg::Map* map;
     etg::Player* player;
+protected:
     EventListenerPhysicsContact* contact_listener;
+    void set_contact_listener();
 };
 
 }

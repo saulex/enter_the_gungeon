@@ -9,35 +9,17 @@ using namespace cocos2d;
 
 namespace etg {
 
-enum ORDER // 越小越先绘制
-{
-    ground,
-    base_wall,
-    ground_1,
-    base_wall_1,
-    decoration,
-    player,
-    other_wall,
-    other_wall_1,
-    ui
+enum class TAG {
+    body = 0x01, // 0001
+    player = 0x02, // 0010
+    wall = 0x04, // 0100
+    map = 0x08 // 1000
 };
 
-enum DIR {
-    E, // empty
-    U,
-    D,
-    L,
-    R,
-    UL,
-    UR,
-    DL,
-    DR,
-    DIR_END
-};
-
-enum TAG {
-    player_body,
-    wall_body
+// contact mask
+enum class C_MASK {
+    character = 0x01, // 0001
+    wall = 0x02 // 0010
 };
 
 // correspond to base_room.tmx
@@ -47,6 +29,8 @@ const static std::set<int> base_room_walkable_gid = {
     98, 99, 100,
     114, 115, 116
 };
+
+const static Vec2 DEFAULT_MOVE_SPEED = { 2, 2 };
 
 //const static std::map<DIR, Vec2> d2v = {
 //    { DIR::E, { 0, 0 } },
@@ -59,28 +43,6 @@ const static std::set<int> base_room_walkable_gid = {
 //    { DIR::DL, { -1, -1 } },
 //    { DIR::DR, { 1, -1 } }
 //};
-
-static Vec2 d2v(DIR d)
-{
-    if (d == DIR::E)
-        return { 0, 0 };
-    if (d == DIR::U)
-        return { 0, 1 };
-    if (d == DIR::D)
-        return { 0, -1 };
-    if (d == DIR::L)
-        return { 0, 0 };
-    if (d == DIR::R)
-        return { 1, 0 };
-    if (d == DIR::UL)
-        return { -1, 1 };
-    if (d == DIR::UR)
-        return { 1, 1 };
-    if (d == DIR::DL)
-        return { -1, -1 };
-    if (d == DIR::DR)
-        return { 1, -1 };
-}
 
 }
 

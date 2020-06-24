@@ -2,7 +2,6 @@
 #define _ETG_CAMERA_HPP_
 
 #include "cocos2d.h"
-#include <boost/Signals2.hpp>
 #include <iostream>
 
 using namespace cocos2d;
@@ -18,8 +17,6 @@ public:
     virtual bool init();
     CREATE_FUNC(Camera);
     void move_by(const Vec2& delta);
-
-    boost::signals2::signal<void()> sig;
 
 protected:
     Vec2 last_mouse_pos;
