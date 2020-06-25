@@ -26,6 +26,8 @@
 #include <config.hpp>
 #include <my_utils.hpp>
 
+#include <boost/Signals2.hpp>
+
 using namespace cocos2d;
 
 namespace etg {
@@ -62,7 +64,7 @@ bool GungeonWorld::init()
     camera->setScale(camera->scale_rate);
     // add player
     this->player = Player::create("Animation/player/Down/Character_Down1.png");
-    player->setAnchorPoint({ 0.5, 0 });
+    player->setAnchorPoint(player->default_anchor);
     player->setPosition(0.25 * map->getContentSize());
     player->setTag(int(TAG::player_node));
     player->setGlobalZOrder(map->pos_to_order(player->getPosition()));
@@ -72,6 +74,7 @@ bool GungeonWorld::init()
     getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
     // shot
     set_bullet_listener();
+    player->shot.connect(boost::bind(&GungeonWorld::add_bullet, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
     // make update() working
     scheduleUpdate();
     return true;
@@ -123,22 +126,6 @@ void GungeonWorld::set_bullet_listener()
     };
 
     getEventDispatcher()->addEventListenerWithSceneGraphPriority(cl, this);
-
-    auto ml = EventListenerMouse::create();
-
-    ml->onMouseDown = [&](EventMouse* e) {
-        if (e->getMouseButton() == EventMouse::MouseButton::BUTTON_LEFT) {
-            auto mouse_pos_in_scene = map->convertToNodeSpace(
-                Vec2(e->getCursorX(), e->getCursorY()));
-            auto offset = mouse_pos_in_scene - player->getPosition();
-
-            add_bullet(player->getPosition(), // correspond to MAP
-                dot(offset / offset.length(), SPEED_BULLET_PLAYER),
-                int(TAG::player_node));
-        }
-    };
-
-    getEventDispatcher()->addEventListenerWithSceneGraphPriority(ml, this);
 }
 
 void GungeonWorld::add_bullet(
@@ -148,6 +135,7 @@ void GungeonWorld::add_bullet(
 {
     if (tag_fire_by == int(TAG::player_node)) {
         auto bullet = Bullet::create(FilePath::player_bullet);
+        bullet->vol = vol;
 
         bullet->setScale(0.3); // TODO Bad Design
         bullet->setAnchorPoint({ 0.5, 0.5 });

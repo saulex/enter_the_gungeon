@@ -8,6 +8,7 @@ namespace etg {
 Bullet::Bullet()
 {
     this->tag_fire_by = -1;
+    this->vol = { 0, 0 };
 }
 
 Bullet* Bullet::create(const std::string& filename)

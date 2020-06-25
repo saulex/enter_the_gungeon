@@ -1,4 +1,5 @@
 #include <Character.hpp>
+#include <config.hpp>
 #include <math.h>
 #include <my_utils.hpp>
 
@@ -176,15 +177,14 @@ bool Player::init()
     set_contact_listener();
 
     add_mouse_listener();
-    add_key_listener();
-
+    add_move_listener();
+    // shot
+    add_shot_listener();
     // debugger
     this->runAction(RepeatForever::create(
         Sequence::createWithTwoActions(
             DelayTime::create(0.5f),
             CallFunc::create([&]() {
-                // log(v2s(d2v(this->cur_face_on)).c_str());
-                // log(v2s(mouse_offset).c_str());
             }))));
 
     scheduleUpdate();
@@ -329,7 +329,7 @@ void Player::add_mouse_listener()
         ->addEventListenerWithSceneGraphPriority(mouse_listener, this);
 }
 
-void Player::add_key_listener()
+void Player::add_move_listener()
 {
     auto listener = EventListenerKeyboard::create();
 
@@ -430,5 +430,23 @@ void Player::play_move_anm(DIR d)
 
         cur_move_anm = d2anm[d];
     }
+}
+
+void Player::add_shot_listener()
+{
+    auto ml = EventListenerMouse::create();
+
+    ml->onMouseDown = [&](EventMouse* e) {
+        if (e->getMouseButton() == EventMouse::MouseButton::BUTTON_LEFT) {
+            auto local_pos = convertToNodeSpace(Vec2(e->getCursorX(), e->getCursorY()));
+            // TODO Correctly shot from CENTER
+            auto offset = local_pos - 0.5 * getContentSize();
+            shot(this->getPosition() + dot(getContentSize(), { 1.0 / 16, 0.5 }),
+                dot(offset / offset.length(), SPEED_BULLET_PLAYER),
+                int(TAG::player_node));
+        }
+    };
+
+    getEventDispatcher()->addEventListenerWithSceneGraphPriority(ml, this);
 }
 }

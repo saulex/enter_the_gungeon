@@ -15,6 +15,7 @@ public:
 
 public:
     int tag_fire_by;
+    cocos2d::Vec2 vol;
 
 protected:
     void set_body();
