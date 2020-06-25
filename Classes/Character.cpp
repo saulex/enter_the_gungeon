@@ -1,4 +1,5 @@
 #include <Character.hpp>
+#include <math.h>
 #include <my_utils.hpp>
 
 using namespace myutl;
@@ -85,6 +86,7 @@ void Character::set_physics_body()
 
 void Character::set_contact_listener()
 {
+    const bool DO_LOG = false;
     // add contact listener
     contact_listener = EventListenerPhysicsContact::create();
 
@@ -93,7 +95,7 @@ void Character::set_contact_listener()
         auto other = c.getShapeB();
         auto this_shape = this->getPhysicsBody()->getFirstShape();
         if (self == this_shape || other == this_shape) {
-            log("contact on!");
+            mylog("contact on!", DO_LOG);
             auto normal = c.getContactData()->normal; // self -> other
             if (other == this_shape) {
                 auto tmp = other;
@@ -119,7 +121,7 @@ void Character::set_contact_listener()
         auto other = c.getShapeB();
         auto this_shape = this->getPhysicsBody()->getFirstShape();
         if (self == this_shape || other == this_shape) {
-            log("contact end!");
+            mylog("contact end!", DO_LOG);
             auto normal = c.getContactData()->normal; // self -> other
             if (other == this_shape) {
                 auto tmp = other;
@@ -142,12 +144,17 @@ void Character::set_contact_listener()
     _eventDispatcher->addEventListenerWithSceneGraphPriority(contact_listener, this);
 }
 
+// ============ Player ============
+
 Player::Player()
 {
     pressed[EventKeyboard::KeyCode::KEY_W] = false;
     pressed[EventKeyboard::KeyCode::KEY_S] = false;
     pressed[EventKeyboard::KeyCode::KEY_A] = false;
     pressed[EventKeyboard::KeyCode::KEY_D] = false;
+    this->cur_face_on = DIR::D;
+    this->cur_move_anm = nullptr;
+    this->default_sf = nullptr;
 }
 
 Player* Player::create(const std::string& filename)
@@ -163,11 +170,21 @@ Player* Player::create(const std::string& filename)
 
 bool Player::init()
 {
+    init_anm();
     set_physics_body();
     set_contact_listener();
 
     add_mouse_listener();
     add_key_listener();
+
+    // debugger
+    this->runAction(RepeatForever::create(
+        Sequence::createWithTwoActions(
+            DelayTime::create(0.5f),
+            CallFunc::create([&]() {
+                // log(v2s(d2v(this->cur_face_on)).c_str());
+                // log(v2s(mouse_offset).c_str());
+            }))));
 
     scheduleUpdate();
     return true;
@@ -180,6 +197,21 @@ void Player::update(float delta)
         if (pressed[key]) {
             move_for(d, delta);
         }
+    }
+    // animate
+    const bool DO_ANM_LOG = true;
+    auto any_key_pressed = false;
+    for (DIR d : { DIR::D, DIR::U, DIR::L, DIR::R })
+        if (pressed[d2key(d)])
+            any_key_pressed = true;
+    if (any_key_pressed) {
+        play_move_anm(cur_face_on);
+    } else {
+        if (cur_move_anm) {
+            this->stopAllActionsByTag(int(TAG::player_anm));
+            cur_move_anm = nullptr;
+        }
+        this->setSpriteFrame(d2sfs[cur_face_on].at(0));
     }
 
     // update position
@@ -266,6 +298,34 @@ EventKeyboard::KeyCode Player::d2key(const DIR& d)
 
 void Player::add_mouse_listener()
 {
+    auto mouse_listener = EventListenerMouse::create();
+
+    mouse_listener->onMouseMove = [&](EventMouse* e) {
+        // vector
+        auto local_pos = convertToNodeSpace(Vec2(e->getCursorX(), e->getCursorY()));
+        auto offset = local_pos - 0.5 * getContentSize();
+        // math
+        float u = M_PI / 8; // unit radians
+        auto rad = atan2f(offset.y, offset.x); // (-pi, pi]
+        if (rad < -u)
+            rad += M_PI * 2; // now [(-1/8) * pi, (15/8)pi )
+        // dir
+        std::vector<DIR> dirs = {
+            DIR::R, DIR::UR, DIR::U, DIR::UL,
+            DIR::L, DIR::DL, DIR::D, DIR::DR
+        };
+        auto face_dir = DIR::E;
+        for (int i : range(dirs.size())) {
+            if (rad < u + 2 * i * u) {
+                face_dir = dirs[i];
+                break;
+            }
+        }
+        this->cur_face_on = face_dir;
+    };
+
+    this->getEventDispatcher()
+        ->addEventListenerWithSceneGraphPriority(mouse_listener, this);
 }
 
 void Player::add_key_listener()
@@ -318,5 +378,55 @@ void Player::set_physics_body()
     body->addShape(shape);
     // add body
     this->addComponent(body);
+}
+
+void Player::init_anm()
+{
+    // animation
+    std::vector<DIR> all_dirs = {
+        DIR::U, DIR::D, DIR::L, DIR::R,
+        DIR::UL, DIR::UR, DIR::DL, DIR::DR
+    };
+    std::vector<std::string> filenames = {
+        "Up", "Down", "Left", "Right",
+        "UpLeft", "UpRight", "DownLeft", "DownRight"
+    };
+    for (int i : range(all_dirs.size())) {
+        auto anim_info = animation_generator(
+            "Animation/player/" + filenames[i] + "/",
+            filenames[i],
+            0.15,
+            4,
+            "Character_");
+        auto anim = anim_info.animation;
+        auto sfs = anim_info.sfs;
+        anim->retain();
+
+        this->d2anm[all_dirs[i]] = anim;
+        this->d2sfs[all_dirs[i]] = sfs;
+    }
+
+    // this->default_sf = SpriteFrameCache::getInstance()
+    //                     ->getSpriteFrameByName("Character_Down1.png");
+}
+
+void Player::play_move_anm(DIR d)
+{
+    const bool DO_ANM_LOG = false;
+    if (cur_move_anm != d2anm[d]) {
+        mylog("cur_move_anm != d2anm[cur_face_on]", DO_ANM_LOG);
+        if (cur_move_anm) {
+            mylog("[STOP] cur_move_anm != nullptr", DO_ANM_LOG);
+            this->stopAllActionsByTag(int(TAG::player_anm));
+        }
+        mylog("[setSpriteFrame]", DO_ANM_LOG);
+        this->setSpriteFrame(d2sfs[d].at(0));
+        mylog("[RepeatForever]", DO_ANM_LOG);
+        auto act = RepeatForever::create(Animate::create(d2anm[d]));
+        act->setTag(int(TAG::player_anm));
+        this->runAction(act);
+
+        cur_move_anm = d2anm[d];
+    }
 }
 }

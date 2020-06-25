@@ -23,17 +23,20 @@ enum ORDER // 越小越先绘制
 };
 
 enum DIR {
-    E, // empty
-    U,
-    D,
-    L,
-    R,
-    UL,
-    UR,
-    DL,
-    DR,
-    DIR_END
+    E = 0x00, // 0000 empty
+    U = 0x01, // 0001
+    D = 0x02, // 0010
+    L = 0x04, // 0100
+    R = 0x08, // 1000
+    UL = 0x05, // 0101
+    UR = 0x09, // 1001
+    DL = 0x06, // 0110
+    DR = 0x0A // 1010
 };
+
+void mylog(const std::string& s, bool flag = true);
+
+void mylog(const char* s, bool flag = true);
 
 std::list<unsigned long> range(unsigned long begin, unsigned long end);
 
@@ -53,6 +56,18 @@ cocos2d::Size v2size(const cocos2d::Vec2& a);
 bool veq(const cocos2d::Vec2& a, const cocos2d::Vec2& b);
 
 cocos2d::Vec2 d2v(DIR d);
+
+struct AnimInfo {
+    cocos2d::Animation* animation;
+    cocos2d::Vector<cocos2d::SpriteFrame*> sfs;
+};
+
+struct AnimInfo animation_generator(
+    const std::string& dir,
+    const std::string& file,
+    float delay, int n,
+    const std::string& prefix = "",
+    const std::string& suffix = ".png");
 
 }
 

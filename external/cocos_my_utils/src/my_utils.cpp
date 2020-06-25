@@ -7,6 +7,18 @@
 
 namespace myutl {
 
+void mylog(const std::string& s, bool flag)
+{
+    if (flag)
+        cocos2d::log(s.c_str());
+}
+
+void mylog(const char* s, bool flag)
+{
+    if (flag)
+        cocos2d::log(s);
+}
+
 std::list<unsigned long> range(unsigned long begin, unsigned long end)
 {
     if (begin >= end) {
@@ -83,6 +95,29 @@ cocos2d::Vec2 d2v(DIR d)
         return { -1, -1 };
     if (d == DIR::DR)
         return { 1, -1 };
+}
+
+struct AnimInfo animation_generator(
+    const std::string& dir,
+    const std::string& file,
+    float delay, int n,
+    const std::string& prefix,
+    const std::string& suffix)
+{
+    auto cache = cocos2d::SpriteFrameCache::getInstance();
+    std::string plist = dir + file + ".plist";
+    cache->addSpriteFramesWithFile(plist);
+    cocos2d::Vector<cocos2d::SpriteFrame*> frames;
+    for (int i = 1; i < n + 1; i++) {
+        auto name = prefix + file + std::to_string(i) + suffix;
+        auto frame = cache->getSpriteFrameByName(name);
+        frames.pushBack(frame);
+    }
+    auto animation = cocos2d::Animation::createWithSpriteFrames(frames);
+    animation->setRestoreOriginalFrame(true);
+    animation->setDelayPerUnit(delay);
+
+    return { animation, frames };
 }
 
 }

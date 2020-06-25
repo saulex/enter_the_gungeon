@@ -59,7 +59,7 @@ bool GungeonWorld::init()
     camera_node->scale_rate = visibleSize.width / map->getContentSize().width;
     camera_node->setScale(camera_node->scale_rate);
     // add player
-    this->player = Player::create("player/face_down.png");
+    this->player = Player::create("Animation/player/Down/Character_Down1.png");
     player->setAnchorPoint({ 0.5, 0 });
     player->setPosition(0.25 * map->getContentSize());
     player->setGlobalZOrder(map->pos_to_order(player->getPosition()));
