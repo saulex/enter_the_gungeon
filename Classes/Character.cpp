@@ -78,7 +78,8 @@ void Character::set_physics_body()
     // set shape
     auto shape = PhysicsShapeEdgeBox::create(getContentSize());
     shape->setCategoryBitmask(int(C_MASK::character));
-    shape->setContactTestBitmask(int(C_MASK::character) | int(C_MASK::wall));
+    shape->setContactTestBitmask(
+        int(C_MASK::character) | int(C_MASK::wall) | int(C_MASK::bullet));
     body->addShape(shape);
     // add body
     this->addComponent(body);
@@ -95,7 +96,7 @@ void Character::set_contact_listener()
         auto other = c.getShapeB();
         auto this_shape = this->getPhysicsBody()->getFirstShape();
         if (self == this_shape || other == this_shape) {
-            mylog("contact on!", DO_LOG);
+            // mylog("contact on!", DO_LOG);
             auto normal = c.getContactData()->normal; // self -> other
             if (other == this_shape) {
                 auto tmp = other;
@@ -121,7 +122,7 @@ void Character::set_contact_listener()
         auto other = c.getShapeB();
         auto this_shape = this->getPhysicsBody()->getFirstShape();
         if (self == this_shape || other == this_shape) {
-            mylog("contact end!", DO_LOG);
+            // mylog("contact end!", DO_LOG);
             auto normal = c.getContactData()->normal; // self -> other
             if (other == this_shape) {
                 auto tmp = other;
@@ -374,7 +375,8 @@ void Player::set_physics_body()
         0,
         dot(body_offset_rate, getContentSize()));
     shape->setCategoryBitmask(int(C_MASK::character));
-    shape->setContactTestBitmask(int(C_MASK::character) | int(C_MASK::wall));
+    shape->setContactTestBitmask(
+        int(C_MASK::character) | int(C_MASK::wall) | int(C_MASK::bullet));
     body->addShape(shape);
     // add body
     this->addComponent(body);

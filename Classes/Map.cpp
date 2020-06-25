@@ -98,10 +98,13 @@ void Map::update_body()
         PHYSICSSHAPE_MATERIAL_DEFAULT,
         0,
         Vec2(0, -0.75 * getTileSize().height));
-    base_wall_shape->setContactTestBitmask(int(C_MASK::character) | int(C_MASK::wall));
+
     base_wall_shape->setCategoryBitmask(int(C_MASK::wall));
+    base_wall_shape->setContactTestBitmask(
+        int(C_MASK::character) | int(C_MASK::wall) | int(C_MASK::bullet));
+
     body->addShape(base_wall_shape);
-    //
+    // extern wall
     for (int i : range(3)) {
         auto extern_wall = PhysicsShapeEdgeBox::create(
             Size(getContentSize().width - (1.5 - 0.25 * i) * getTileSize().width,

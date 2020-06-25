@@ -54,7 +54,6 @@ public:
     void update(float delta) override;
 
 protected:
-
     Vec2 default_anchor = { 0.5, 0 };
 
     // keyboard listener

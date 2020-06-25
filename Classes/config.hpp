@@ -10,17 +10,27 @@ using namespace cocos2d;
 namespace etg {
 
 enum class TAG {
-    body = 0x01, // 0001
-    player = 0x02, // 0010
-    wall = 0x04, // 0100
-    map = 0x08, // 1000
-    player_anm = 532
+    player_node,
+    player_anm,
+
+    bullet_node,
+    wall_node,
+    map_node,
+    camera_node
 };
 
 // contact mask
 enum class C_MASK {
     character = 0x01, // 0001
-    wall = 0x02 // 0010
+    wall = 0x02, // 0010
+    bullet = 0x04 // 0100
+};
+
+class FilePath {
+public:
+    static constexpr const char*
+        player_bullet
+        = "bullet/player_bullet.png";
 };
 
 // correspond to base_room.tmx
@@ -32,6 +42,7 @@ const static std::set<int> base_room_walkable_gid = {
 };
 
 const static Vec2 DEFAULT_MOVE_SPEED = { 1, 1 };
+const static Vec2 SPEED_BULLET_PLAYER = { 200, 200 };
 
 //const static std::map<DIR, Vec2> d2v = {
 //    { DIR::E, { 0, 0 } },

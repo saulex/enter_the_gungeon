@@ -26,9 +26,11 @@
 #define __GUNGEON_WORLD_SCENE_H__
 
 #include "cocos2d.h"
+#include <Bullet.hpp>
 #include <Camera.hpp>
 #include <Character.hpp>
 #include <Map.hpp>
+#include <set>
 
 namespace etg {
 
@@ -43,12 +45,20 @@ public:
     CREATE_FUNC(GungeonWorld);
 
 protected:
-    etg::Camera* camera_node;
+    etg::Camera* camera;
     etg::Map* map;
     etg::Player* player;
+
 protected:
-    EventListenerPhysicsContact* contact_listener;
-    void set_contact_listener();
+    // shot
+    void set_bullet_listener();
+    void add_bullet(
+        const cocos2d::Vec2& start,
+        const cocos2d::Vec2& vol,
+        int tag_fire_by);
+    void clean_bullets();
+    std::set<Bullet*> bullets;
+    std::set<Bullet*> bullets_to_del;
 };
 
 }
