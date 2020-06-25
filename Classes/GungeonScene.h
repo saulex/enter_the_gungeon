@@ -29,6 +29,7 @@
 #include <Camera.hpp>
 #include <Character.hpp>
 #include <Map.hpp>
+#include <Enemy.hpp>
 
 namespace etg {
 

@@ -54,6 +54,7 @@ list(APPEND GAME_SOURCE
      Classes/Camera.cpp
      Classes/Map.cpp
      Classes/Character.cpp
+     Classes/Enemy.cpp
      )
 list(APPEND GAME_HEADER
      Classes/AppDelegate.h
@@ -63,6 +64,7 @@ list(APPEND GAME_HEADER
      Classes/Character.hpp
      Classes/Status.hpp
      Classes/config.hpp
+     Classes/Enemy.hpp
      )
 
 # ADD external libs

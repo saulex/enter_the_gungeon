@@ -68,6 +68,10 @@ bool GungeonWorld::init()
     getPhysicsWorld()->setGravity({ 0, 0 });
     getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
     getPhysicsWorld()->setUpdateRate(2);
+    // Enemy
+    auto enemy = Enemy::create("Animation/player/Down/Character_Down1.png");
+    enemy->setPosition(0.5 * map->getContentSize());
+    map->addChild(enemy);
     // make update() working
     scheduleUpdate();
     return true;

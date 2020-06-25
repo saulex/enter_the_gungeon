@@ -21,7 +21,7 @@ public:
     static Enemy* create(const std::string& filename);
 public:
     bool init() override;
-    void update(float delta) override;;
+    void update(float delta) override;
 };
 
 }
