@@ -13,7 +13,8 @@ enum class TAG {
     body = 0x01, // 0001
     player = 0x02, // 0010
     wall = 0x04, // 0100
-    map = 0x08 // 1000
+    map = 0x08, // 1000
+    player_anm = 532
 };
 
 // contact mask
@@ -30,7 +31,7 @@ const static std::set<int> base_room_walkable_gid = {
     114, 115, 116
 };
 
-const static Vec2 DEFAULT_MOVE_SPEED = { 2, 2 };
+const static Vec2 DEFAULT_MOVE_SPEED = { 1, 1 };
 
 //const static std::map<DIR, Vec2> d2v = {
 //    { DIR::E, { 0, 0 } },

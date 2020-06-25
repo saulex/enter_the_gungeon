@@ -66,11 +66,22 @@ protected:
     void add_key_listener();
 
     // physics body
-    Vec2 body_offset_rate = { 0, -0.5 };
-    Vec2 body_size_rate = { 1, 0.5 };
+    Vec2 body_offset_rate = { 0, -0.25 };
+    Vec2 body_size_rate = { 0.5, 0.25 };
 
     void set_physics_body() override;
-    
+
+    // animation
+    std::map<DIR, Animation*> d2anm;
+    std::map<DIR, cocos2d::Vector<SpriteFrame*>> d2sfs;
+    Animation* cur_move_anm;
+    SpriteFrame* default_sf;
+    DIR cur_face_on;
+
+    Vec2 mouse_offset; // for debug
+
+    void init_anm();
+    void play_move_anm(DIR d);
 };
 
 }
