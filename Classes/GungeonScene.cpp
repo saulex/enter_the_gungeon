@@ -75,6 +75,10 @@ bool GungeonWorld::init()
     // shot
     set_bullet_listener();
     player->shot.connect(boost::bind(&GungeonWorld::add_bullet, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+    // Enemy
+    auto enemy = Enemy::create("Animation/player/Down/Character_Down1.png");
+    enemy->setPosition(0.5 * map->getContentSize());
+    map->addChild(enemy);
     // make update() working
     scheduleUpdate();
     return true;

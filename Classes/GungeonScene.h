@@ -31,6 +31,7 @@
 #include <Character.hpp>
 #include <Map.hpp>
 #include <set>
+#include <Enemy.hpp>
 
 namespace etg {
 
