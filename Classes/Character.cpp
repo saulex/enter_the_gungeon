@@ -374,9 +374,8 @@ void Player::set_physics_body()
         PHYSICSSHAPE_MATERIAL_DEFAULT,
         0,
         dot(body_offset_rate, getContentSize()));
-    shape->setCategoryBitmask(int(C_MASK::character));
-    shape->setContactTestBitmask(
-        int(C_MASK::character) | int(C_MASK::wall) | int(C_MASK::bullet));
+    shape->setCategoryBitmask(int(C_MASK::player));
+    shape->setContactTestBitmask(int(C_MASK::all));
     body->addShape(shape);
     // add body
     this->addComponent(body);

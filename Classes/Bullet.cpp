@@ -28,6 +28,20 @@ bool Bullet::init()
     return true;
 }
 
+void Bullet::set_tag_fire_by(TAG tag)
+{
+    if (tag == TAG::player_node) {
+        this->tag_fire_by = int(TAG::player_node);
+        this->getPhysicsBody()->getFirstShape()->setContactTestBitmask(
+            int(C_MASK::all) ^ (int(C_MASK::player)));
+    } else if (tag == TAG::enemy_anm) {
+        this->tag_fire_by = int(TAG::enemy_anm);
+        this->getPhysicsBody()->getFirstShape()->setContactTestBitmask(
+            int(C_MASK::all) ^ (int(C_MASK::enemy)));
+    }
+
+}
+
 void Bullet::set_body()
 {
     auto body = PhysicsBody::create();
@@ -37,8 +51,7 @@ void Bullet::set_body()
 
     auto shape = PhysicsShapeEdgeBox::create(getContentSize());
     shape->setCategoryBitmask(int(C_MASK::bullet));
-    shape->setContactTestBitmask(
-        int(C_MASK::character) | int(C_MASK::wall) | int(C_MASK::bullet));
+    shape->setContactTestBitmask(int(C_MASK::all));
     body->addShape(shape);
 
     this->addComponent(body);

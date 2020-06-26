@@ -65,7 +65,7 @@ bool GungeonWorld::init()
     // add player
     this->player = Player::create("Animation/player/Down/Character_Down1.png");
     player->setAnchorPoint(player->default_anchor);
-    player->setPosition(0.25 * map->getContentSize());
+    player->setPosition(dot(map->getContentSize(), { 0.1, 0.1 }));
     player->setTag(int(TAG::player_node));
     player->setGlobalZOrder(map->pos_to_order(player->getPosition()));
     map->addChild(player);
@@ -76,9 +76,7 @@ bool GungeonWorld::init()
     set_bullet_listener();
     player->shot.connect(boost::bind(&GungeonWorld::add_bullet, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
     // Enemy
-    auto enemy = Enemy::create("Animation/player/Down/Character_Down1.png");
-    enemy->setPosition(0.5 * map->getContentSize());
-    map->addChild(enemy);
+    generate_enemies();
     // make update() working
     scheduleUpdate();
     return true;
@@ -120,7 +118,7 @@ void GungeonWorld::set_bullet_listener()
                 bullet = bullet_b;
                 hit_target = a;
             }
-            if (hit_target->getTag() != bullet->tag_fire_by) {
+            if (hit_target->getTag() != bullet->get_tag_fire_by()) {
                 bullet->setVisible(false);
                 bullets_to_del.insert(bullet);
                 return false;
@@ -145,7 +143,7 @@ void GungeonWorld::add_bullet(
         bullet->setAnchorPoint({ 0.5, 0.5 });
         bullet->setPosition(start);
 
-        bullet->tag_fire_by = int(TAG::player_node);
+        bullet->set_tag_fire_by(TAG::player_node);
         map->addChild(bullet);
 
         bullet->runAction(RepeatForever::create(
@@ -166,4 +164,44 @@ void GungeonWorld::clean_bullets()
         b->removeFromParent();
     }
 }
+
+void GungeonWorld::generate_enemies()
+{
+    // 9 个可能出怪的位置,是地图的等分点
+    auto& mn = ENEMY_GENERATE_POS;
+    auto generate_points = std::vector<Vec2> {};
+    for (int i : range(1, mn[0] + 1)) {
+        for (int j : range(1, mn[1] + 1)) {
+            generate_points.push_back(
+                dot(map->getContentSize(),
+                    { i * 1.0f / (mn[0] + 1), j * 1.0f / (mn[1] + 1) }));
+        }
+    }
+
+    auto add_enemy = [&](const Vec2& point) {
+        auto enemy = Enemy::create(AutoPolygon::generatePolygon(
+            "Animation/enemy/slime/default.png"));
+        enemy->setScale(0.5);
+        enemy->setPosition(point);
+        enemy->set_player(player);
+        this->map->addChild(enemy);
+        this->enemies.push_back(enemy);
+    };
+
+    // 保底出怪
+    for (int i : range(ENEMY_GENERATE_LEAST)) {
+        int j = RandomHelper::random_int(0, int(generate_points.size() - 1));
+        auto point = generate_points[j];
+        generate_points.erase(generate_points.begin() + j);
+
+        add_enemy(point);
+    }
+    // 有几率出怪
+    for (auto& point : generate_points) {
+        if (RandomHelper::random_real(0.0f, 1.0f) < ENEMY_GENERATE_PROB) {
+            add_enemy(point);
+        }
+    }
+}
+
 }

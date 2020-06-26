@@ -13,6 +13,9 @@ enum class TAG {
     player_node,
     player_anm,
 
+    enemy_node,
+    enemy_anm,
+
     bullet_node,
     wall_node,
     map_node,
@@ -23,7 +26,13 @@ enum class TAG {
 enum class C_MASK {
     character = 0x01, // 0001
     wall = 0x02, // 0010
-    bullet = 0x04 // 0100
+    bullet = 0x04, // 0100
+    player = 0x08, // 1000
+    enemy = 0x10, // 0001,0000
+    placeholder1 = 0x20, // 0010,0000
+    placeholder2 = 0x40, // 0100,0000
+    placeholder3 = 0x80, // 1000,0000
+    all = 0xff
 };
 
 class FilePath {
@@ -42,7 +51,12 @@ const static std::set<int> base_room_walkable_gid = {
 };
 
 const static Vec2 DEFAULT_MOVE_SPEED = { 1, 1 };
+const static Vec2 SPEED_MOVE_ENEMY = { 40, 40 };
 const static Vec2 SPEED_BULLET_PLAYER = { 200, 200 };
+// 先生成固定数目的怪物，再按概率生成其他怪物
+const static float ENEMY_GENERATE_PROB = 0.4f;
+const static int ENEMY_GENERATE_LEAST = 3;
+const static std::vector<int> ENEMY_GENERATE_POS = { 3, 3 };
 
 //const static std::map<DIR, Vec2> d2v = {
 //    { DIR::E, { 0, 0 } },

@@ -19,9 +19,18 @@ public:
     CREATE_FUNC(Enemy);
     Enemy();
     static Enemy* create(const std::string& filename);
+    static Enemy* create(const PolygonInfo& info);
+
 public:
     bool init() override;
     void update(float delta) override;
+    // physics body
+    void set_physics_body() override;
+    // ai
+    Player* player;
+    void set_player(Player* pl);
+
+    void run_ai_logic();
 };
 
 }

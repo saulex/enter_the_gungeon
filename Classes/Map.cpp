@@ -100,8 +100,7 @@ void Map::update_body()
         Vec2(0, -0.75 * getTileSize().height));
 
     base_wall_shape->setCategoryBitmask(int(C_MASK::wall));
-    base_wall_shape->setContactTestBitmask(
-        int(C_MASK::character) | int(C_MASK::wall) | int(C_MASK::bullet));
+    base_wall_shape->setContactTestBitmask(int(C_MASK::all));
 
     body->addShape(base_wall_shape);
     // extern wall

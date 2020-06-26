@@ -2,6 +2,7 @@
 #define _ETG_BULLET_HPP_
 
 #include "cocos2d.h"
+#include <config.hpp>
 
 namespace etg {
 
@@ -14,10 +15,13 @@ public:
     bool init() override;
 
 public:
-    int tag_fire_by;
+    void set_tag_fire_by(TAG tag);
+    int get_tag_fire_by() { return this->tag_fire_by; };
+
     cocos2d::Vec2 vol;
 
 protected:
+    int tag_fire_by;
     void set_body();
 };
 

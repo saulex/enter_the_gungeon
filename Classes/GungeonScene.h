@@ -51,7 +51,7 @@ protected:
     etg::Player* player;
 
 protected:
-    // shot
+    // bullet helper
     void set_bullet_listener();
     void add_bullet(
         const cocos2d::Vec2& start,
@@ -60,6 +60,9 @@ protected:
     void clean_bullets();
     std::set<Bullet*> bullets;
     std::set<Bullet*> bullets_to_del;
+    // enemy control
+    std::vector<Enemy*> enemies;
+    void generate_enemies();
 };
 
 }
