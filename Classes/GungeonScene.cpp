@@ -26,6 +26,8 @@
 #include <config.hpp>
 #include <my_utils.hpp>
 
+#include <boost/Signals2.hpp>
+
 using namespace cocos2d;
 
 namespace etg {
@@ -45,29 +47,34 @@ bool GungeonWorld::init()
     }
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
-    // add camera
-    this->camera_node = Camera::create();
-    camera_node->setPosition({ 0, 0 });
-    this->addChild(camera_node);
-    // add map
+    // add Camera
+    this->camera = Camera::create();
+    camera->setTag(int(TAG::camera_node));
+    camera->setPosition({ 0, 0 });
+    this->addChild(camera);
+    // add Map
     this->map = Map::create("maps/base_room/base_room.tmx");
     map->setAnchorPoint({ 0, 0 });
     map->setPosition({ 0, 0 });
+    map->setTag(int(TAG::camera_node));
     // map->setGlobalZOrder(int(Order::ground));
-    camera_node->addChild(map);
+    camera->addChild(map);
     // scale camera by map width
-    camera_node->scale_rate = visibleSize.width / map->getContentSize().width;
-    camera_node->setScale(camera_node->scale_rate);
+    camera->scale_rate = visibleSize.width / map->getContentSize().width;
+    camera->setScale(camera->scale_rate);
     // add player
     this->player = Player::create("Animation/player/Down/Character_Down1.png");
-    player->setAnchorPoint({ 0.5, 0 });
+    player->setAnchorPoint(player->default_anchor);
     player->setPosition(0.25 * map->getContentSize());
+    player->setTag(int(TAG::player_node));
     player->setGlobalZOrder(map->pos_to_order(player->getPosition()));
     map->addChild(player);
     // Physics world
     getPhysicsWorld()->setGravity({ 0, 0 });
     getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
-    getPhysicsWorld()->setUpdateRate(2);
+    // shot
+    set_bullet_listener();
+    player->shot.connect(boost::bind(&GungeonWorld::add_bullet, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
     // Enemy
     auto enemy = Enemy::create("Animation/player/Down/Character_Down1.png");
     enemy->setPosition(0.5 * map->getContentSize());
@@ -79,29 +86,84 @@ bool GungeonWorld::init()
 
 void GungeonWorld::update(float delta)
 {
+    // update z-order
     player->setLocalZOrder(map->pos_to_order(player->getPosition()));
+    // clean bullets
+    clean_bullets();
 }
 
-void GungeonWorld::set_contact_listener()
+void GungeonWorld::set_bullet_listener()
 {
-    // add contact listener
-    contact_listener = EventListenerPhysicsContact::create();
-
-    contact_listener->onContactBegin = [&](PhysicsContact& c) -> bool {
-        auto a = c.getShapeA();
-        auto b = c.getShapeB();
-        for (auto& shape : { a, b }) {
-            if (shape->getCategoryBitmask() & int(C_MASK::character)) {
-
+    auto remove_bullet = [&](Bullet* b) {
+        bullets.erase(b);
+        b->removeAllComponents();
+        b->removeAllChildren();
+        b->removeFromParentAndCleanup(true);
+    };
+    const bool DO_LOG = false;
+    auto cl = EventListenerPhysicsContact::create();
+    cl->onContactBegin = [&](PhysicsContact& c) -> bool {
+        auto a = c.getShapeA()->getBody()->getNode();
+        auto b = c.getShapeB()->getBody()->getNode();
+        auto bullet_a = dynamic_cast<Bullet*>(a);
+        auto bullet_b = dynamic_cast<Bullet*>(b);
+        if (bullet_a && bullet_b) {
+            return false;
+        }
+        if (bullet_a || bullet_b) {
+            Bullet* bullet;
+            Node* hit_target;
+            if (bullet_a) {
+                bullet = bullet_a;
+                hit_target = b;
+            } else {
+                bullet = bullet_b;
+                hit_target = a;
+            }
+            if (hit_target->getTag() != bullet->tag_fire_by) {
+                bullet->setVisible(false);
+                bullets_to_del.insert(bullet);
+                return false;
             }
         }
-        return true;
+        return false;
     };
 
-    contact_listener->onContactSeparate = [&](PhysicsContact& c) -> bool {
-        return true;
-    };
+    getEventDispatcher()->addEventListenerWithSceneGraphPriority(cl, this);
+}
 
-    _eventDispatcher->addEventListenerWithSceneGraphPriority(contact_listener, this);
+void GungeonWorld::add_bullet(
+    const cocos2d::Vec2& start,
+    const cocos2d::Vec2& vol,
+    int tag_fire_by)
+{
+    if (tag_fire_by == int(TAG::player_node)) {
+        auto bullet = Bullet::create(FilePath::player_bullet);
+        bullet->vol = vol;
+
+        bullet->setScale(0.3); // TODO Bad Design
+        bullet->setAnchorPoint({ 0.5, 0.5 });
+        bullet->setPosition(start);
+
+        bullet->tag_fire_by = int(TAG::player_node);
+        map->addChild(bullet);
+
+        bullet->runAction(RepeatForever::create(
+            MoveBy::create(1.0f, vol)));
+
+        bullets.insert(bullet);
+    }
+}
+
+void GungeonWorld::clean_bullets()
+{
+    while (!bullets_to_del.empty()) {
+        auto b = *bullets_to_del.begin();
+        bullets_to_del.erase(b);
+        bullets.erase(b);
+        b->removeAllComponents();
+        b->removeAllChildren();
+        b->removeFromParent();
+    }
 }
 }

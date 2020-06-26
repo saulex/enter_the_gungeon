@@ -2,10 +2,11 @@
 #define _ETG_CHARACTER_HPP_
 
 #include "cocos2d.h"
-#include <Status.hpp>
-#include <config.hpp>
-#include <map>
+
 #include <my_utils.hpp>
+
+#include <boost/Signals2.hpp>
+#include <map>
 #include <string>
 
 using namespace cocos2d;
@@ -42,6 +43,12 @@ public:
 
     EventListenerPhysicsContact* contact_listener;
     void set_contact_listener();
+    // SHOT
+    boost::signals2::signal<void(
+        const cocos2d::Vec2& start,
+        const cocos2d::Vec2& vol,
+        int tag_fire_by)>
+        shot;
 };
 
 class Player : public Character {
@@ -52,10 +59,10 @@ public:
     static Player* create(const std::string& filename);
     bool init() override;
     void update(float delta) override;
+    // pos
+    Vec2 default_anchor = { 0.5, 0 };
 
 protected:
-
-    Vec2 default_anchor = { 0.5, 0 };
 
     // keyboard listener
     std::map<EventKeyboard::KeyCode, bool> pressed;
@@ -63,7 +70,7 @@ protected:
     static EventKeyboard::KeyCode d2key(const DIR& d);
 
     void add_mouse_listener();
-    void add_key_listener();
+    void add_move_listener();
 
     // physics body
     Vec2 body_offset_rate = { 0, -0.25 };
@@ -82,6 +89,8 @@ protected:
 
     void init_anm();
     void play_move_anm(DIR d);
+    // shot listener
+    void add_shot_listener();
 };
 
 }

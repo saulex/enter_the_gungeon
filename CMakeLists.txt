@@ -54,6 +54,7 @@ list(APPEND GAME_SOURCE
      Classes/Camera.cpp
      Classes/Map.cpp
      Classes/Character.cpp
+     Classes/Bullet.cpp
      Classes/Enemy.cpp
      )
 list(APPEND GAME_HEADER
@@ -64,15 +65,16 @@ list(APPEND GAME_HEADER
      Classes/Character.hpp
      Classes/Status.hpp
      Classes/config.hpp
+     Classes/Bullet.hpp
      Classes/Enemy.hpp
      )
 
 # ADD external libs
 add_subdirectory(external/cocos_my_utils)
-# add_subdirectory(external/my_boost)
+add_subdirectory(external/my_boost)
 list(APPEND EXTERNAL_LIBS_PRIVATE
      cocos_my_utils
-     #my_boost
+     my_boost
      )
 
 if(ANDROID)
@@ -146,7 +148,7 @@ target_link_libraries(${APP_NAME}
 target_include_directories(${APP_NAME}
         PRIVATE Classes
         PRIVATE ${COCOS2DX_ROOT_PATH}/cocos/audio/include/
-        # PRIVATE external/my_boost/include/  # UGLY USAGE HERE
+        PRIVATE external/my_boost/include/  # UGLY USAGE HERE
 )
 
 # mark app resources
