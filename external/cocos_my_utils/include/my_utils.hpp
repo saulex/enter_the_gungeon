@@ -62,6 +62,10 @@ struct AnimInfo {
     cocos2d::Vector<cocos2d::SpriteFrame*> sfs;
 };
 
+/// <summary>
+/// dir/<file>.plist
+/// dir/<prefix><file>.png 分割后的小图片可以有前缀
+/// </summary>
 struct AnimInfo animation_generator(
     const std::string& dir,
     const std::string& file,
