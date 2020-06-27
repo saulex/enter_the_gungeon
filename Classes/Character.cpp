@@ -1,4 +1,5 @@
 #include <Character.hpp>
+#include <config.hpp>
 #include <math.h>
 #include <my_utils.hpp>
 
@@ -7,10 +8,12 @@ using namespace myutl;
 namespace etg {
 
 Character::Character()
+    : move_speed(DEFAULT_MOVE_SPEED)
+    , hp(0)
+    , hp_limit(0)
 {
     for (auto& d : { DIR::L, DIR::R, DIR::U, DIR::D })
         contact_count_on[d] = 0;
-    move_speed = DEFAULT_MOVE_SPEED;
 }
 
 Character* Character::create(const std::string& filename)
@@ -78,7 +81,8 @@ void Character::set_physics_body()
     // set shape
     auto shape = PhysicsShapeEdgeBox::create(getContentSize());
     shape->setCategoryBitmask(int(C_MASK::character));
-    shape->setContactTestBitmask(int(C_MASK::character) | int(C_MASK::wall));
+    shape->setContactTestBitmask(
+        int(C_MASK::character) | int(C_MASK::wall) | int(C_MASK::bullet));
     body->addShape(shape);
     // add body
     this->addComponent(body);
@@ -95,7 +99,7 @@ void Character::set_contact_listener()
         auto other = c.getShapeB();
         auto this_shape = this->getPhysicsBody()->getFirstShape();
         if (self == this_shape || other == this_shape) {
-            mylog("contact on!", DO_LOG);
+            // mylog("contact on!", DO_LOG);
             auto normal = c.getContactData()->normal; // self -> other
             if (other == this_shape) {
                 auto tmp = other;
@@ -121,7 +125,7 @@ void Character::set_contact_listener()
         auto other = c.getShapeB();
         auto this_shape = this->getPhysicsBody()->getFirstShape();
         if (self == this_shape || other == this_shape) {
-            mylog("contact end!", DO_LOG);
+            // mylog("contact end!", DO_LOG);
             auto normal = c.getContactData()->normal; // self -> other
             if (other == this_shape) {
                 auto tmp = other;
@@ -144,17 +148,26 @@ void Character::set_contact_listener()
     _eventDispatcher->addEventListenerWithSceneGraphPriority(contact_listener, this);
 }
 
+void Character::do_damage(int damage)
+{
+    hp -= damage;
+    if (hp < 0)
+        hp = 0;
+    else if (hp > hp_limit)
+        hp = hp_limit;
+}
+
 // ============ Player ============
 
 Player::Player()
+    : cur_move_anm(nullptr)
+    , default_sf(nullptr)
+    , cur_face_on(DIR::D)
 {
     pressed[EventKeyboard::KeyCode::KEY_W] = false;
     pressed[EventKeyboard::KeyCode::KEY_S] = false;
     pressed[EventKeyboard::KeyCode::KEY_A] = false;
     pressed[EventKeyboard::KeyCode::KEY_D] = false;
-    this->cur_face_on = DIR::D;
-    this->cur_move_anm = nullptr;
-    this->default_sf = nullptr;
 }
 
 Player* Player::create(const std::string& filename)
@@ -175,16 +188,9 @@ bool Player::init()
     set_contact_listener();
 
     add_mouse_listener();
-    add_key_listener();
-
-    // debugger
-    this->runAction(RepeatForever::create(
-        Sequence::createWithTwoActions(
-            DelayTime::create(0.5f),
-            CallFunc::create([&]() {
-                // log(v2s(d2v(this->cur_face_on)).c_str());
-                // log(v2s(mouse_offset).c_str());
-            }))));
+    add_move_listener();
+    // shot
+    add_shot_listener();
 
     scheduleUpdate();
     return true;
@@ -328,7 +334,7 @@ void Player::add_mouse_listener()
         ->addEventListenerWithSceneGraphPriority(mouse_listener, this);
 }
 
-void Player::add_key_listener()
+void Player::add_move_listener()
 {
     auto listener = EventListenerKeyboard::create();
 
@@ -373,8 +379,8 @@ void Player::set_physics_body()
         PHYSICSSHAPE_MATERIAL_DEFAULT,
         0,
         dot(body_offset_rate, getContentSize()));
-    shape->setCategoryBitmask(int(C_MASK::character));
-    shape->setContactTestBitmask(int(C_MASK::character) | int(C_MASK::wall));
+    shape->setCategoryBitmask(int(C_MASK::player));
+    shape->setContactTestBitmask(int(C_MASK::all));
     body->addShape(shape);
     // add body
     this->addComponent(body);
@@ -428,5 +434,25 @@ void Player::play_move_anm(DIR d)
 
         cur_move_anm = d2anm[d];
     }
+}
+
+void Player::add_shot_listener()
+{
+    auto ml = EventListenerMouse::create();
+
+    ml->onMouseDown = [&](EventMouse* e) {
+        if (e->getMouseButton() == EventMouse::MouseButton::BUTTON_LEFT) {
+            auto local_pos = convertToNodeSpace(Vec2(e->getCursorX(), e->getCursorY()));
+            // TODO Correctly shot from CENTER
+            auto offset = local_pos - 0.5 * getContentSize();
+            shot(
+                this->getPosition() + dot(getContentSize(), { 1.0 / 16, 0.5 }),
+                dot(offset / offset.length(), SPEED_BULLET_PLAYER),
+                int(TAG::player_node),
+                DAMAGE_PLAYER_BULLET);
+        }
+    };
+
+    getEventDispatcher()->addEventListenerWithSceneGraphPriority(ml, this);
 }
 }
