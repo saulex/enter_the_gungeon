@@ -38,6 +38,11 @@ public:
     bool one_shot_round_over;
     int shot_num;
     void fire_at_player();
+    // game loop control
+    void when_player_die();
+    // hp
+    void when_hurt(int damage) override;
+    void when_die() override;
 };
 
 }
