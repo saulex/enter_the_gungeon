@@ -26,6 +26,8 @@
 #include <config.hpp>
 #include <my_utils.hpp>
 
+#include <algorithm>
+
 using namespace cocos2d;
 
 namespace etg {
@@ -67,6 +69,7 @@ bool GungeonWorld::init()
     player->setTag(int(TAG::player_node));
     player->setGlobalZOrder(map->pos_to_order(player->getPosition()));
     map->addChild(player);
+    player->die.connect(boost::bind(&GungeonWorld::when_game_end, this));
     // Physics world
     getPhysicsWorld()->setGravity({ 0, 0 });
     // getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
@@ -82,7 +85,7 @@ bool GungeonWorld::init()
     // Enemy
     generate_enemies();
     // set debugger
-    set_debugger();
+    // set_debugger();
     // make update() working
     scheduleUpdate();
     return true;
@@ -91,7 +94,9 @@ bool GungeonWorld::init()
 void GungeonWorld::update(float delta)
 {
     // update z-order
-    player->setLocalZOrder(map->pos_to_order(player->getPosition()));
+    if (player) {
+        player->setLocalZOrder(map->pos_to_order(player->getPosition()));
+    }
     // clean bullets
     clean_bullets();
 }
@@ -202,8 +207,8 @@ void GungeonWorld::on_bullet_hit(Bullet* bullet, Node* hit_node)
     if (this->bullets_to_del.count(bullet))
         return;
     if (hit_node->getTag() != bullet->get_tag_fire_by()) {
-        log("bullet hit, from: %d, to: %d",
-            bullet->get_tag_fire_by(), hit_node->getTag());
+        //log("bullet hit, from: %d, to: %d",
+        //    bullet->get_tag_fire_by(), hit_node->getTag());
         bullet->setVisible(false);
         bullets_to_del.insert(bullet);
         // do damage
@@ -232,8 +237,10 @@ void GungeonWorld::generate_enemies()
             "Animation/enemy/slime/default.png"));
         enemy->setScale(0.5);
         enemy->setPosition(point);
-        enemy->set_player(player);
         enemy->setTag(int(TAG::enemy_node));
+        // set player
+        enemy->set_player(player);
+        player->die.connect(boost::bind(&Enemy::when_player_die, enemy));
         // enable shot
         enemy->shot_num += RandomHelper::random_int(0, 3);
         enemy->shot.connect(boost::bind(&GungeonWorld::add_bullet, this,
@@ -242,6 +249,7 @@ void GungeonWorld::generate_enemies()
         // set hp
         enemy->hp = HP_LIMIT_ENEMY;
         enemy->hp_limit = HP_LIMIT_ENEMY;
+        enemy->die.connect(boost::bind(&GungeonWorld::when_enemy_die, this, enemy));
         // maintain
         this->map->addChild(enemy);
         this->enemies.push_back(enemy);
@@ -263,4 +271,22 @@ void GungeonWorld::generate_enemies()
     }
 }
 
+void GungeonWorld::when_game_end()
+{
+    clean_bullets();
+    for (auto& e : enemies) {
+        e->removeAllComponents();
+        getEventDispatcher()->removeEventListenersForTarget(e);
+        e->stopAllActions();
+    }
+    removeChild(player);
+    player = nullptr;
+}
+
+void GungeonWorld::when_enemy_die(Enemy* e)
+{
+    enemies.erase(std::remove(enemies.begin(), enemies.end(), e), enemies.end());
+    this->removeChild(e);
+
+}
 }

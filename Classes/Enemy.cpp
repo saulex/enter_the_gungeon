@@ -50,7 +50,7 @@ bool Enemy::init()
 
 void Enemy::update(float delta)
 {
-    if (shot_interval_timer < 0 && one_shot_round_over) {
+    if (player && shot_interval_timer < 0 && one_shot_round_over) {
         auto sequence_shot_v = Vector<FiniteTimeAction*>();
 
         sequence_shot_v.pushBack(CallFunc::create(
@@ -112,11 +112,13 @@ void Enemy::run_ai_move_logic()
     };
 
     auto ai_move = [&]() {
+        if (!player)
+            return;
         int randtime = rand() % 2 + 1; //随机移动时间
         auto ep = getPosition(); // enemy position
         auto pp = player->getPosition(); // player position
         auto x_move_limit = 50.0f, y_move_limit = 50.0f;
-        mylog(v2s(ep - pp));
+        // mylog(v2s(ep - pp));
         if (abs(ep.x - pp.x) > x_move_limit) {
             if (pp.x < ep.x)
                 move_for(DIR::L, randtime);
@@ -131,8 +133,6 @@ void Enemy::run_ai_move_logic()
         }
     };
 
-    int randtime = rand() % 2 + 1;
-    this->scheduleUpdate();
     auto move_act = Sequence::create(
         DelayTime::create(0.5f),
         CallFunc::create(ai_move),
@@ -145,6 +145,8 @@ void Enemy::run_ai_move_logic()
 
 void Enemy::fire_at_player()
 {
+    if (!player)
+        return;
     auto start = getPosition();
     auto offset = player->getPosition() - getPosition();
     auto vol = dot(offset / offset.length(), SPEED_BULLET_ENEMY);
@@ -153,4 +155,44 @@ void Enemy::fire_at_player()
         getTag(),
         DAMAGE_ENEMY_BULLET);
 }
+
+void Enemy::when_player_die()
+{
+    player = nullptr;
+}
+
+void Enemy::when_hurt(int damage)
+{
+    // hurt animation is not stoppable
+    if (getActionByTag(int(TAG::enemy_hurt_anm)))
+        return;
+
+    auto get_hurt_act = Sequence::create(
+        TintBy::create(0.25f,
+            0, -255, -255),
+        TintBy::create(0.25f,
+            0, -255, -255)
+            ->reverse(),
+        NULL);
+
+    get_hurt_act->setTag(int(TAG::enemy_hurt_anm));
+    runAction(get_hurt_act);
+}
+
+void Enemy::when_die()
+{
+    player = nullptr;
+    getEventDispatcher()->removeEventListenersForTarget(this);
+    this->stopAllActions();
+    this->removeAllComponents();
+    log("die");
+    auto sequence = Sequence::create(
+        Spawn::createWithTwoActions(
+            FadeOut::create(0.5f),
+            ScaleBy::create(0.5f, 0.2f)),
+        CallFunc::create([&]() { die(); }), // call parent to clean itself
+        NULL);
+    runAction(sequence);
+}
+
 }

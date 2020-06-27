@@ -11,10 +11,14 @@ namespace etg {
 
 enum class TAG {
     player_node,
+    player_body,
     player_anm,
+    player_hurt_act,
 
     enemy_node,
+    enemy_body,
     enemy_anm,
+    enemy_hurt_anm,
 
     bullet_node,
     wall_node,

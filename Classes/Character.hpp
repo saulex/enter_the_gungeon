@@ -53,6 +53,10 @@ public:
     // hp
     int hp, hp_limit;
     virtual void do_damage(int damage);
+    boost::signals2::signal<void()> die;
+    boost::signals2::signal<void(int)> hurt;
+    virtual void when_die() {};
+    virtual void when_hurt(int damage) {};
 };
 
 class Player : public Character {
@@ -94,6 +98,9 @@ protected:
     void play_move_anm(DIR d);
     // shot listener
     void add_shot_listener();
+    // when get hurt or die
+    void when_hurt(int damage) override;
+    void when_die() override;
 };
 
 }
