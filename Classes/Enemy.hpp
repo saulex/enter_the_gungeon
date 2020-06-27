@@ -29,8 +29,15 @@ public:
     // ai
     Player* player;
     void set_player(Player* pl);
-
-    void run_ai_logic();
+    // move
+    void run_ai_move_logic();
+    //shot
+    float shot_interval; // shot interval between shot rounds
+    float shot_interval_timer;
+    float shot_delay; // shot delay in one round
+    bool one_shot_round_over;
+    int shot_num;
+    void fire_at_player();
 };
 
 }

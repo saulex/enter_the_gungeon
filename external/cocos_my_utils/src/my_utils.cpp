@@ -16,7 +16,7 @@ void mylog(const std::string& s, bool flag)
 void mylog(const char* s, bool flag)
 {
     if (flag)
-        cocos2d::log(s, flag);
+        cocos2d::log(s);
 }
 
 std::list<unsigned long> range(unsigned long begin, unsigned long end)

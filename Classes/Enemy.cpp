@@ -5,7 +5,13 @@ namespace etg {
 
 Enemy::Enemy()
     : player(nullptr)
+    , shot_interval(SHOT_INTERVAL_ENEMY)
+    , shot_delay(SHOT_DELAY_ENEMY)
+    , one_shot_round_over(true)
+    , shot_num(SHOT_NUMBER_ENEMY)
 {
+    shot_interval_timer = RandomHelper::random_real(
+        0.0f, 3 * SHOT_INTERVAL_ENEMY);
 }
 
 Enemy* Enemy::create(const std::string& filename)
@@ -37,12 +43,33 @@ bool Enemy::init()
     set_contact_listener();
 
     move_speed = SPEED_MOVE_ENEMY; // 设置移动速度
-    run_ai_logic();
+    run_ai_move_logic();
+    scheduleUpdate();
     return true;
 }
 
 void Enemy::update(float delta)
 {
+    if (shot_interval_timer < 0 && one_shot_round_over) {
+        auto sequence_shot_v = Vector<FiniteTimeAction*>();
+
+        sequence_shot_v.pushBack(CallFunc::create(
+            [&]() { one_shot_round_over = false; }));
+
+        for (int i : range(shot_num)) {
+            sequence_shot_v.pushBack(CallFunc::create(boost::bind(&Enemy::fire_at_player, this)));
+            if (i != shot_num - 1)
+                sequence_shot_v.pushBack(DelayTime::create(shot_delay));
+        }
+
+        sequence_shot_v.pushBack(CallFunc::create([&]() {
+            one_shot_round_over = true;
+            shot_interval_timer = shot_interval; // reset timer after one round
+        }));
+
+        this->runAction(Sequence::create(sequence_shot_v));
+    }
+    shot_interval_timer -= delta;
 }
 
 void Enemy::set_physics_body()
@@ -66,7 +93,7 @@ void Enemy::set_player(Player* pl)
     this->player = pl;
 }
 
-void Enemy::run_ai_logic()
+void Enemy::run_ai_move_logic()
 {
     auto random_stop = [&]() {
         int randnum = rand() % 4;
@@ -106,13 +133,24 @@ void Enemy::run_ai_logic()
 
     int randtime = rand() % 2 + 1;
     this->scheduleUpdate();
-    auto sss = Sequence::create(
+    auto move_act = Sequence::create(
         DelayTime::create(0.5f),
         CallFunc::create(ai_move),
         DelayTime::create(0.5f),
         CallFunc::create(random_stop),
         NULL);
-    auto act = RepeatForever::create(sss);
+    auto act = RepeatForever::create(move_act);
     this->runAction(act);
+}
+
+void Enemy::fire_at_player()
+{
+    auto start = getPosition();
+    auto offset = player->getPosition() - getPosition();
+    auto vol = dot(offset / offset.length(), SPEED_BULLET_ENEMY);
+    shot(start,
+        vol,
+        getTag(),
+        DAMAGE_ENEMY_BULLET);
 }
 }

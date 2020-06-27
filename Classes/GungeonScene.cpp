@@ -26,8 +26,6 @@
 #include <config.hpp>
 #include <my_utils.hpp>
 
-#include <boost/Signals2.hpp>
-
 using namespace cocos2d;
 
 namespace etg {
@@ -71,12 +69,20 @@ bool GungeonWorld::init()
     map->addChild(player);
     // Physics world
     getPhysicsWorld()->setGravity({ 0, 0 });
-    getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
-    // shot
+    // getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
+    // SHOT, DAMAGE, HP
     set_bullet_listener();
-    player->shot.connect(boost::bind(&GungeonWorld::add_bullet, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+    player->hp = HP_LIMIT_PLAYER;
+    player->hp_limit = HP_LIMIT_PLAYER;
+    player->shot.connect(boost::bind(&GungeonWorld::add_bullet, this,
+        boost::placeholders::_1, boost::placeholders::_2,
+        boost::placeholders::_3, boost::placeholders::_4));
+    this->bullet_hit.connect(boost::bind(&GungeonWorld::on_bullet_hit, this,
+        boost::placeholders::_1, boost::placeholders::_2));
     // Enemy
     generate_enemies();
+    // set debugger
+    set_debugger();
     // make update() working
     scheduleUpdate();
     return true;
@@ -90,6 +96,23 @@ void GungeonWorld::update(float delta)
     clean_bullets();
 }
 
+void GungeonWorld::set_debugger()
+{
+    auto to_run = [&]() {
+        auto s = std::string("");
+        s.append("[" + std::to_string(player->hp) + "]");
+        for (auto& e : enemies) {
+            s.append(" ," + std::to_string(e->hp));
+        }
+        mylog(s);
+    };
+    auto intv = 1.0f;
+    this->runAction(RepeatForever::create(
+        Sequence::createWithTwoActions(
+            DelayTime::create(intv),
+            CallFunc::create(to_run))));
+}
+
 void GungeonWorld::set_bullet_listener()
 {
     auto remove_bullet = [&](Bullet* b) {
@@ -101,27 +124,18 @@ void GungeonWorld::set_bullet_listener()
     const bool DO_LOG = false;
     auto cl = EventListenerPhysicsContact::create();
     cl->onContactBegin = [&](PhysicsContact& c) -> bool {
-        auto a = c.getShapeA()->getBody()->getNode();
-        auto b = c.getShapeB()->getBody()->getNode();
-        auto bullet_a = dynamic_cast<Bullet*>(a);
-        auto bullet_b = dynamic_cast<Bullet*>(b);
+        auto node_a = c.getShapeA()->getBody()->getNode();
+        auto node_b = c.getShapeB()->getBody()->getNode();
+        auto bullet_a = dynamic_cast<Bullet*>(node_a);
+        auto bullet_b = dynamic_cast<Bullet*>(node_b);
         if (bullet_a && bullet_b) {
             return false;
         }
         if (bullet_a || bullet_b) {
-            Bullet* bullet;
-            Node* hit_target;
             if (bullet_a) {
-                bullet = bullet_a;
-                hit_target = b;
+                bullet_hit(bullet_a, node_b);
             } else {
-                bullet = bullet_b;
-                hit_target = a;
-            }
-            if (hit_target->getTag() != bullet->get_tag_fire_by()) {
-                bullet->setVisible(false);
-                bullets_to_del.insert(bullet);
-                return false;
+                bullet_hit(bullet_b, node_a);
             }
         }
         return false;
@@ -133,7 +147,8 @@ void GungeonWorld::set_bullet_listener()
 void GungeonWorld::add_bullet(
     const cocos2d::Vec2& start,
     const cocos2d::Vec2& vol,
-    int tag_fire_by)
+    int tag_fire_by,
+    int damage)
 {
     if (tag_fire_by == int(TAG::player_node)) {
         auto bullet = Bullet::create(FilePath::player_bullet);
@@ -144,6 +159,23 @@ void GungeonWorld::add_bullet(
         bullet->setPosition(start);
 
         bullet->set_tag_fire_by(TAG::player_node);
+        bullet->set_damage(damage);
+        map->addChild(bullet);
+
+        bullet->runAction(RepeatForever::create(
+            MoveBy::create(1.0f, vol)));
+
+        bullets.insert(bullet);
+    } else if (tag_fire_by == int(TAG::enemy_node)) {
+        auto bullet = Bullet::create(FilePath::enemy_bullet);
+        bullet->vol = vol;
+
+        bullet->setScale(0.3); // TODO Bad Design
+        bullet->setAnchorPoint({ 0.5, 0.5 });
+        bullet->setPosition(start);
+
+        bullet->set_tag_fire_by(TAG::enemy_node);
+        bullet->set_damage(damage);
         map->addChild(bullet);
 
         bullet->runAction(RepeatForever::create(
@@ -165,6 +197,23 @@ void GungeonWorld::clean_bullets()
     }
 }
 
+void GungeonWorld::on_bullet_hit(Bullet* bullet, Node* hit_node)
+{
+    if (this->bullets_to_del.count(bullet))
+        return;
+    if (hit_node->getTag() != bullet->get_tag_fire_by()) {
+        log("bullet hit, from: %d, to: %d",
+            bullet->get_tag_fire_by(), hit_node->getTag());
+        bullet->setVisible(false);
+        bullets_to_del.insert(bullet);
+        // do damage
+        auto hit_character = dynamic_cast<Character*>(hit_node);
+        if (hit_character) {
+            hit_character->do_damage(bullet->get_damage());
+        }
+    }
+}
+
 void GungeonWorld::generate_enemies()
 {
     // 9 个可能出怪的位置,是地图的等分点
@@ -178,12 +227,22 @@ void GungeonWorld::generate_enemies()
         }
     }
 
-    auto add_enemy = [&](const Vec2& point) {
+    auto add_one_enemy_on = [&](const Vec2& point) {
         auto enemy = Enemy::create(AutoPolygon::generatePolygon(
             "Animation/enemy/slime/default.png"));
         enemy->setScale(0.5);
         enemy->setPosition(point);
         enemy->set_player(player);
+        enemy->setTag(int(TAG::enemy_node));
+        // enable shot
+        enemy->shot_num += RandomHelper::random_int(0, 3);
+        enemy->shot.connect(boost::bind(&GungeonWorld::add_bullet, this,
+            boost::placeholders::_1, boost::placeholders::_2,
+            boost::placeholders::_3, boost::placeholders::_4));
+        // set hp
+        enemy->hp = HP_LIMIT_ENEMY;
+        enemy->hp_limit = HP_LIMIT_ENEMY;
+        // maintain
         this->map->addChild(enemy);
         this->enemies.push_back(enemy);
     };
@@ -194,12 +253,12 @@ void GungeonWorld::generate_enemies()
         auto point = generate_points[j];
         generate_points.erase(generate_points.begin() + j);
 
-        add_enemy(point);
+        add_one_enemy_on(point);
     }
     // 有几率出怪
     for (auto& point : generate_points) {
         if (RandomHelper::random_real(0.0f, 1.0f) < ENEMY_GENERATE_PROB) {
-            add_enemy(point);
+            add_one_enemy_on(point);
         }
     }
 }

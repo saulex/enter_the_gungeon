@@ -40,15 +40,19 @@ public:
 
     // PHYSICS BODY
     virtual void set_physics_body();
-
+    // Listener that controls movement
     EventListenerPhysicsContact* contact_listener;
     void set_contact_listener();
     // SHOT
     boost::signals2::signal<void(
-        const cocos2d::Vec2& start,
-        const cocos2d::Vec2& vol,
-        int tag_fire_by)>
+        const cocos2d::Vec2&, // start
+        const cocos2d::Vec2&, // vol
+        int, // tag_fire_by
+        int)> // damage
         shot;
+    // hp
+    int hp, hp_limit;
+    virtual void do_damage(int damage);
 };
 
 class Player : public Character {
@@ -63,7 +67,6 @@ public:
     Vec2 default_anchor = { 0.5, 0 };
 
 protected:
-
     // keyboard listener
     std::map<EventKeyboard::KeyCode, bool> pressed;
     static DIR key2d(const EventKeyboard::KeyCode& key);

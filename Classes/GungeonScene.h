@@ -26,12 +26,15 @@
 #define __GUNGEON_WORLD_SCENE_H__
 
 #include "cocos2d.h"
+
 #include <Bullet.hpp>
 #include <Camera.hpp>
 #include <Character.hpp>
+#include <Enemy.hpp>
 #include <Map.hpp>
 #include <set>
-#include <Enemy.hpp>
+
+#include <boost/Signals2.hpp>
 
 namespace etg {
 
@@ -51,15 +54,20 @@ protected:
     etg::Player* player;
 
 protected:
+    // debugger
+    void set_debugger();
     // bullet helper
     void set_bullet_listener();
     void add_bullet(
         const cocos2d::Vec2& start,
         const cocos2d::Vec2& vol,
-        int tag_fire_by);
+        int tag_fire_by,
+        int damage);
     void clean_bullets();
     std::set<Bullet*> bullets;
     std::set<Bullet*> bullets_to_del;
+    boost::signals2::signal<void(Bullet*, Node*)> bullet_hit; // signal
+    void on_bullet_hit(Bullet* bullet, Node* hit_node); // slot
     // enemy control
     std::vector<Enemy*> enemies;
     void generate_enemies();

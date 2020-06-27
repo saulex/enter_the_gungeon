@@ -34,8 +34,8 @@ void Bullet::set_tag_fire_by(TAG tag)
         this->tag_fire_by = int(TAG::player_node);
         this->getPhysicsBody()->getFirstShape()->setContactTestBitmask(
             int(C_MASK::all) ^ (int(C_MASK::player)));
-    } else if (tag == TAG::enemy_anm) {
-        this->tag_fire_by = int(TAG::enemy_anm);
+    } else if (tag == TAG::enemy_node) {
+        this->tag_fire_by = int(TAG::enemy_node);
         this->getPhysicsBody()->getFirstShape()->setContactTestBitmask(
             int(C_MASK::all) ^ (int(C_MASK::enemy)));
     }
