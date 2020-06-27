@@ -57,7 +57,7 @@ const static std::set<int> base_room_walkable_gid = {
 
 const static Vec2 DEFAULT_MOVE_SPEED = { 1, 1 };
 const static Vec2 SPEED_MOVE_ENEMY = { 40, 40 };
-// 先生成固定数目的怪物，再按概率生成其他怪物
+// 鍏堢敓鎴愬浐瀹氭暟鐩殑鎬墿锛屽啀鎸夋鐜囩敓鎴愬叾浠栨�墿
 const static float ENEMY_GENERATE_PROB = 0.4f;
 const static int ENEMY_GENERATE_LEAST = 3;
 const static std::vector<int> ENEMY_GENERATE_POS = { 3, 3 };

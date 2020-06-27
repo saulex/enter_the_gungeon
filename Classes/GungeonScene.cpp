@@ -221,7 +221,7 @@ void GungeonWorld::on_bullet_hit(Bullet* bullet, Node* hit_node)
 
 void GungeonWorld::generate_enemies()
 {
-    // 9 ¸ö¿ÉÄÜ³ö¹ÖµÄÎ»ÖÃ,ÊÇµØÍ¼µÄµÈ·Öµã
+    // 9 ä¸ªå¯èƒ½å‡ºæ€ªçš„ä½ç½®,æ˜¯åœ°å›¾çš„ç­‰åˆ†ç‚¹
     auto& mn = ENEMY_GENERATE_POS;
     auto generate_points = std::vector<Vec2> {};
     for (int i : range(1, mn[0] + 1)) {
@@ -255,7 +255,7 @@ void GungeonWorld::generate_enemies()
         this->enemies.push_back(enemy);
     };
 
-    // ±£µ×³ö¹Ö
+    // ä¿åº•å‡ºæ€ª
     for (int i : range(ENEMY_GENERATE_LEAST)) {
         int j = RandomHelper::random_int(0, int(generate_points.size() - 1));
         auto point = generate_points[j];
@@ -263,7 +263,7 @@ void GungeonWorld::generate_enemies()
 
         add_one_enemy_on(point);
     }
-    // ÓĞ¼¸ÂÊ³ö¹Ö
+    // æœ‰å‡ ç‡å‡ºæ€ª
     for (auto& point : generate_points) {
         if (RandomHelper::random_real(0.0f, 1.0f) < ENEMY_GENERATE_PROB) {
             add_one_enemy_on(point);

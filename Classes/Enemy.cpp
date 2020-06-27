@@ -42,7 +42,7 @@ bool Enemy::init()
     set_physics_body();
     set_contact_listener();
 
-    move_speed = SPEED_MOVE_ENEMY; // 设置移动速度
+    move_speed = SPEED_MOVE_ENEMY; // 璁剧疆绉诲姩閫熷害
     run_ai_move_logic();
     scheduleUpdate();
     return true;
@@ -82,7 +82,7 @@ void Enemy::set_physics_body()
     // set shape
     auto shape = PhysicsShapeEdgeBox::create(getContentSize());
     shape->setCategoryBitmask(int(C_MASK::enemy));
-    shape->setContactTestBitmask(int(C_MASK::all) ^ int(C_MASK::enemy)); // 异或就是做减（加）法
+    shape->setContactTestBitmask(int(C_MASK::all) ^ int(C_MASK::enemy)); // 寮傛垨灏辨槸鍋氬噺锛堝姞锛夋硶
     body->addShape(shape);
     // add body
     this->addComponent(body);
@@ -114,7 +114,7 @@ void Enemy::run_ai_move_logic()
     auto ai_move = [&]() {
         if (!player)
             return;
-        int randtime = rand() % 2 + 1; //随机移动时间
+        int randtime = rand() % 2 + 1; //闅忔満绉诲姩鏃堕棿
         auto ep = getPosition(); // enemy position
         auto pp = player->getPosition(); // player position
         auto x_move_limit = 50.0f, y_move_limit = 50.0f;
