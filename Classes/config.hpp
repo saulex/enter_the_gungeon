@@ -83,6 +83,8 @@ enum class MAP_TYPE {
     NORMAL,
     BOSS
 };
+// time between map change
+const static float SCENE_REPLACE_TIME = 1.0f;
 }
 
 #endif //_ETG_CONFIG_HPP_

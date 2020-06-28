@@ -80,6 +80,11 @@ protected:
     std::map<DIR, Sprite*> door_on;
     void player_hit_on_door(DIR d);
     void init_doors();
+    bool player_has_hit_on_door = false;
+    // set up player
+    void init_player();
+    void run_scene();
+    bool scene_running;
 };
 
 }

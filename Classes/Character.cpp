@@ -192,6 +192,17 @@ Player* Player::create(const std::string& filename)
     return nullptr;
 }
 
+Player* Player::create(const PolygonInfo& info)
+{
+    Player* player = new (std::nothrow) Player();
+    if (player && player->initWithPolygon(info) && player->init()) {
+        player->autorelease();
+        return player;
+    }
+    CC_SAFE_DELETE(player);
+    return nullptr;
+}
+
 bool Player::init()
 {
     init_anm();
@@ -399,8 +410,8 @@ void Player::add_shot_listener()
             auto local_pos = convertToNodeSpace(Vec2(e->getCursorX(), e->getCursorY()));
             // TODO Correctly shot from CENTER
             auto offset = local_pos - 0.5 * getContentSize();
-            shot(
-                this->getPosition() + dot(getContentSize(), { 1.0 / 16, 0.5 }),
+            auto start = getPosition();
+            shot(start,
                 dot(offset / offset.length(), SPEED_BULLET_PLAYER),
                 int(TAG::player_node),
                 DAMAGE_PLAYER_BULLET);

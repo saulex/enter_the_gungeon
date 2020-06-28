@@ -8,7 +8,8 @@ bool Camera::init()
     if (!Node::init()) {
         return false;
     }
-    this->add_mouse_listener();
+    mouse_listen_has_begin = false;
+    // this->add_mouse_listener();
     return true;
 }
 
@@ -45,6 +46,6 @@ void Camera::add_mouse_listener()
         last_mouse_pos = cur_pos;
         this->move_by(myutl::dot(relative_move, { 1, -1 }));
     };
-    this->_eventDispatcher->addEventListenerWithFixedPriority(listener, 1);
+    getEventDispatcher()->addEventListenerWithFixedPriority(listener, 1);
 }
 }

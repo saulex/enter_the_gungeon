@@ -54,6 +54,7 @@ public:
     static MapHelper* get_instance();
     MapStatus get_cur_map_info();
     HeroStatus get_hero_status();
+    std::vector<int> get_cur_map_pos();
 
 
     void cur_map_clear();
