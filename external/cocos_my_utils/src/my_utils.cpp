@@ -95,6 +95,36 @@ cocos2d::Vec2 d2v(DIR d)
         return { -1, -1 };
     if (d == DIR::DR)
         return { 1, -1 };
+
+    return { 0, 0 };
+}
+
+DIR v2d(const cocos2d::Vec2& v)
+{
+    if (veq(v, { 0, 0 }))
+        return DIR::E;
+    if (veq(v, { 0, 1 }))
+        return DIR::U;
+    if (veq(v, { 0, -1 }))
+        return DIR::D;
+    if (veq(v, { -1, 0 }))
+        return DIR::L;
+    if (veq(v, { 1, 0 }))
+        return DIR::R;
+    if (veq(v, { -1, 1 }))
+        return DIR::UL;
+    if (veq(v, { 1, 1 }))
+        return DIR::UR;
+    if (veq(v, { -1, -1 }))
+        return DIR::DL;
+    if (veq(v, { 1, -1 }))
+        return DIR::DR;
+    return DIR::E;
+}
+
+std::vector<DIR> all4dirs()
+{
+    return { DIR::U, DIR::D, DIR::L, DIR::R };
 }
 
 struct AnimInfo animation_generator(

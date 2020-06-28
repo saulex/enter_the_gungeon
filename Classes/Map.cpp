@@ -33,8 +33,8 @@ bool Map::init()
     //set_order({ "right_other", "left_other", "up_other", "down_other" }, Order::other_wall_1);
     //set_order({ "decoration" }, Order::decoration);
 
-    // open wall
-    for (auto door : { Door::D, Door::U, Door::L }) {
+    // All doors are close by default
+    for (auto door : { DIR::D, DIR::U, DIR::L, DIR::R }) {
         set_door(door, false);
     }
     refresh_zorder();
@@ -57,19 +57,19 @@ void Map::update(float delta)
 {
 }
 
-void Map::set_door(Door door, bool visible)
+void Map::set_door(DIR door, bool visible)
 {
     std::vector<std::string> layer_names;
-    if (door == Door::U) {
+    if (door == DIR::U) {
         layer_names = { "up_other", "up_ground" };
     }
-    if (door == Door::D) {
+    if (door == DIR::D) {
         layer_names = { "down_other", "down_ground" };
     }
-    if (door == Door::L) {
+    if (door == DIR::L) {
         layer_names = { "left_other", "left_wall", "left_ground" };
     }
-    if (door == Door::R) {
+    if (door == DIR::R) {
         layer_names = { "right_other", "right_wall", "right_ground" };
     }
     for (auto& s : layer_names) {

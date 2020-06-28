@@ -57,6 +57,10 @@ bool veq(const cocos2d::Vec2& a, const cocos2d::Vec2& b);
 
 cocos2d::Vec2 d2v(DIR d);
 
+DIR v2d(const cocos2d::Vec2& v);
+
+std::vector<DIR> all4dirs();
+
 struct AnimInfo {
     cocos2d::Animation* animation;
     cocos2d::Vector<cocos2d::SpriteFrame*> sfs;

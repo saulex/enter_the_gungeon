@@ -44,7 +44,8 @@ public:
     static constexpr const char
         *player_bullet
         = "bullet/player_bullet.png",
-        *enemy_bullet = "bullet/enemy_bullet.png";
+        *enemy_bullet = "bullet/enemy_bullet.png",
+        *fake_door = "door/door.png";
 };
 
 // correspond to base_room.tmx
@@ -74,6 +75,14 @@ const static float SHOT_INTERVAL_ENEMY = 3.0f;
 const static float SHOT_DELAY_ENEMY = 0.5f; // shot delay in one round
 const static float SHOT_INTERVAL_PLAYER = 0.4f;
 const static int SHOT_NUMBER_ENEMY = 3;
+// DUNGEON SIZE
+const static int DUNGEON_SIZE_WIDTH = 3;
+const static int DUNGEON_SIZE_HEIGHT = 3;
+// MAP TYPE
+enum class MAP_TYPE {
+    NORMAL,
+    BOSS
+};
 }
 
 #endif //_ETG_CONFIG_HPP_

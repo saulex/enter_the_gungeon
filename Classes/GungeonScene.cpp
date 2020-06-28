@@ -26,6 +26,7 @@
 #include <config.hpp>
 #include <my_utils.hpp>
 
+#include <MapHelper.hpp>
 #include <algorithm>
 
 using namespace cocos2d;
@@ -40,29 +41,37 @@ Scene* GungeonWorld::createScene()
 // on "init" you need to initialize your instance
 bool GungeonWorld::init()
 {
-    //////////////////////////////
-    // 1. super init first
+    // TODO Refactor: make this function more readable
+    // super init first
     if (!Scene::initWithPhysics()) {
         return false;
     }
+    // Get current map info
+    auto map_info = MapHelper::get_instance()->get_cur_map_info();
+    if (map_info.is_null)
+        return false;
+    //
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
-    // add Camera
+    // add CAMERA
     this->camera = Camera::create();
     camera->setTag(int(TAG::camera_node));
     camera->setPosition({ 0, 0 });
     this->addChild(camera);
-    // add Map
+    // add MAP
     this->map = Map::create("maps/base_room/base_room.tmx");
     map->setAnchorPoint({ 0, 0 });
     map->setPosition({ 0, 0 });
     map->setTag(int(TAG::camera_node));
+    // // set doors
+    init_doors();
     // map->setGlobalZOrder(int(Order::ground));
     camera->addChild(map);
-    // scale camera by map width
+    // SCALE CAMERA by map width
     camera->scale_rate = visibleSize.width / map->getContentSize().width;
     camera->setScale(camera->scale_rate);
-    // add player
+    // add PLAYER
+    // TODO set player position by come_from
     this->player = Player::create("Animation/player/Down/Character_Down1.png");
     player->setAnchorPoint(player->default_anchor);
     player->setPosition(dot(map->getContentSize(), { 0.1, 0.1 }));
@@ -73,7 +82,7 @@ bool GungeonWorld::init()
     // Physics world
     getPhysicsWorld()->setGravity({ 0, 0 });
     // getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
-    // SHOT, DAMAGE, HP
+    // // SHOT, DAMAGE, HP
     set_bullet_listener();
     player->hp = HP_LIMIT_PLAYER;
     player->hp_limit = HP_LIMIT_PLAYER;
@@ -82,10 +91,20 @@ bool GungeonWorld::init()
         boost::placeholders::_3, boost::placeholders::_4));
     this->bullet_hit.connect(boost::bind(&GungeonWorld::on_bullet_hit, this,
         boost::placeholders::_1, boost::placeholders::_2));
-    // Enemy
+    // ENEMY
+    if (!map_info.is_clear) {
+        if (map_info.type == MAP_TYPE::NORMAL) {
+            generate_enemies();
+        }
+        if (map_info.type == MAP_TYPE::BOSS) {
+            // TODO add a boss here
+            generate_enemies();
+        }
+    }
     generate_enemies();
-    // set debugger
+    // set DEBUGGER
     // set_debugger();
+    MapHelper::get_instance();
     // make update() working
     scheduleUpdate();
     return true;
@@ -99,6 +118,22 @@ void GungeonWorld::update(float delta)
     }
     // clean bullets
     clean_bullets();
+    auto map_info = MapHelper::get_instance()->get_cur_map_info();
+    if (enemies.empty() && !map_info.is_clear) {
+        MapHelper::get_instance()->cur_map_clear();
+        // open all doors
+        for (auto d : all4dirs())
+            map->set_door(d, true);
+    }
+    // check if player go into DOOR
+    if (map_info.is_clear) {
+        for (auto d : all4dirs()) {
+            if (door_on[d] && player->getBoundingBox().containsPoint(door_on[d]->getPosition())) {
+                player_hit_on_door(d);
+                break;
+            }
+        }
+    }
 }
 
 void GungeonWorld::set_debugger()
@@ -287,6 +322,50 @@ void GungeonWorld::when_enemy_die(Enemy* e)
 {
     enemies.erase(std::remove(enemies.begin(), enemies.end(), e), enemies.end());
     this->removeChild(e);
+}
 
+void GungeonWorld::player_hit_on_door(DIR d)
+{
+    // mylog("hit on door" + v2s(d2v(d)));
+    auto map_info = MapHelper::get_instance()->get_cur_map_info();
+    if (map_info.is_clear && map_info.door_open[d] && this->door_on[d]) {
+        MapHelper::get_instance()->go_to_map_on(d, player->hp, player->hp_limit);
+    }
+}
+
+void GungeonWorld::init_doors()
+{
+    auto map_info = MapHelper::get_instance()->get_cur_map_info();
+    auto map_size = map->getContentSize();
+    auto tile_size = map->getTileSize();
+    auto to_door = std::map<DIR, Vec2> {
+        { DIR::U,
+            dot(map_size, { 0.5, 1 }) + dot(tile_size, { 0, -2.5 }) },
+        { DIR::D,
+            dot(map_size, { 0.5, 0 }) + dot(tile_size, { 0, 1 }) },
+        { DIR::L,
+            dot(map_size, { 0, 0.5 }) + dot(tile_size, { 1, 0 }) },
+        { DIR::R,
+            dot(map_size, { 1, 0.5 }) + dot(tile_size, { -1, 0 }) }
+    };
+    for (DIR d : all4dirs()) {
+        // open the door only when map is clear
+        if (map_info.is_clear)
+            map->set_door(d, true);
+        else
+            map->set_door(d, false);
+        // add fake door
+        if (map_info.door_open[d]) {
+            auto door = Sprite::create(FilePath::fake_door);
+            door->setAnchorPoint({ 0, 0 });
+            door->setPosition(to_door[d]);
+            // door->setGlobalZOrder(100); // for debug
+            door->setVisible(false);
+            door_on[d] = door;
+            map->addChild(door);
+        } else {
+            door_on[d] = nullptr;
+        }
+    }
 }
 }
