@@ -32,7 +32,9 @@
 #include <Character.hpp>
 #include <Enemy.hpp>
 #include <Map.hpp>
+
 #include <set>
+#include <map>
 
 #include <boost/Signals2.hpp>
 
@@ -74,6 +76,15 @@ protected:
     // game loop control
     void when_game_end();
     void when_enemy_die(Enemy* e);
+    // doors
+    std::map<DIR, Sprite*> door_on;
+    void player_hit_on_door(DIR d);
+    void init_doors();
+    bool player_has_hit_on_door = false;
+    // set up player
+    void init_player();
+    void run_scene();
+    bool scene_running;
 };
 
 }

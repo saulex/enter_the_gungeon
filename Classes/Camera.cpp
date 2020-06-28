@@ -8,13 +8,14 @@ bool Camera::init()
     if (!Node::init()) {
         return false;
     }
-    this->add_mouse_listener();
+    mouse_listen_has_begin = false;
+    // this->add_mouse_listener();
     return true;
 }
 
 void Camera::move_by(const Vec2& delta)
 {
-    // ÒªÈÃÉãÏñÍ·ÒÆ¶¯£¬Ïà¶ÔµØ£¬ÒªÈÃÆä×ÓÎïÌåÏòÏà·´·½ÏòÔË¶¯
+    // è¦è®©æ‘„åƒå¤´ç§»åŠ¨ï¼Œç›¸å¯¹åœ°ï¼Œè¦è®©å…¶å­ç‰©ä½“å‘ç›¸åæ–¹å‘è¿åŠ¨
     myutl::move_by(this, -delta);
 }
 
@@ -45,6 +46,6 @@ void Camera::add_mouse_listener()
         last_mouse_pos = cur_pos;
         this->move_by(myutl::dot(relative_move, { 1, -1 }));
     };
-    this->_eventDispatcher->addEventListenerWithFixedPriority(listener, 1);
+    getEventDispatcher()->addEventListenerWithFixedPriority(listener, 1);
 }
 }

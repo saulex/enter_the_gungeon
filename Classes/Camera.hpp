@@ -17,11 +17,12 @@ public:
     virtual bool init();
     CREATE_FUNC(Camera);
     void move_by(const Vec2& delta);
+    
+    void add_mouse_listener();
 
 protected:
     Vec2 last_mouse_pos;
     bool mouse_listen_has_begin;
-    void add_mouse_listener();
 };
 
 };

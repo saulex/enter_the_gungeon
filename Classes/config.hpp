@@ -44,7 +44,8 @@ public:
     static constexpr const char
         *player_bullet
         = "bullet/player_bullet.png",
-        *enemy_bullet = "bullet/enemy_bullet.png";
+        *enemy_bullet = "bullet/enemy_bullet.png",
+        *fake_door = "door/door.png";
 };
 
 // correspond to base_room.tmx
@@ -57,7 +58,7 @@ const static std::set<int> base_room_walkable_gid = {
 
 const static Vec2 DEFAULT_MOVE_SPEED = { 1, 1 };
 const static Vec2 SPEED_MOVE_ENEMY = { 40, 40 };
-// 先生成固定数目的怪物，再按概率生成其他怪物
+// 鍏堢敓鎴愬浐瀹氭暟鐩殑鎬墿锛屽啀鎸夋鐜囩敓鎴愬叾浠栨�墿
 const static float ENEMY_GENERATE_PROB = 0.4f;
 const static int ENEMY_GENERATE_LEAST = 3;
 const static std::vector<int> ENEMY_GENERATE_POS = { 3, 3 };
@@ -74,6 +75,16 @@ const static float SHOT_INTERVAL_ENEMY = 3.0f;
 const static float SHOT_DELAY_ENEMY = 0.5f; // shot delay in one round
 const static float SHOT_INTERVAL_PLAYER = 0.4f;
 const static int SHOT_NUMBER_ENEMY = 3;
+// DUNGEON SIZE
+const static int DUNGEON_SIZE_WIDTH = 3;
+const static int DUNGEON_SIZE_HEIGHT = 3;
+// MAP TYPE
+enum class MAP_TYPE {
+    NORMAL,
+    BOSS
+};
+// time between map change
+const static float SCENE_REPLACE_TIME = 1.0f;
 }
 
 #endif //_ETG_CONFIG_HPP_

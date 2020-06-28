@@ -65,10 +65,11 @@ public:
     CREATE_FUNC(Player);
     Player();
     static Player* create(const std::string& filename);
+    static Player* create(const PolygonInfo& info);
     bool init() override;
     void update(float delta) override;
-    // pos
-    Vec2 default_anchor = { 0.5, 0 };
+    // TODO Bad Design
+    Vec2 default_anchor = { 0.5, 0.5 };
 
 protected:
     // keyboard listener

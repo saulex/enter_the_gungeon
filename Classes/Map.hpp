@@ -4,6 +4,7 @@
 #include "cocos2d.h"
 #include <config.hpp>
 #include <map>
+#include <my_utils.hpp>
 
 using namespace cocos2d;
 
@@ -11,19 +12,11 @@ namespace etg {
 
 class Map : public TMXTiledMap {
 public:
-    enum class Door {
-        U,
-        D,
-        R,
-        L
-    };
-
-public:
     static Map* create(const std::string& tmxFile);
     bool init() override;
     void update(float delta) override;
 
-    void set_door(Door door, bool visible);
+    void set_door(myutl::DIR dir, bool visible);
 
     /**
      * \brief

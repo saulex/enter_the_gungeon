@@ -26,6 +26,7 @@
 #include <config.hpp>
 #include <my_utils.hpp>
 
+#include <MapHelper.hpp>
 #include <algorithm>
 
 using namespace cocos2d;
@@ -40,65 +41,80 @@ Scene* GungeonWorld::createScene()
 // on "init" you need to initialize your instance
 bool GungeonWorld::init()
 {
-    //////////////////////////////
-    // 1. super init first
+    // TODO Refactor: make this whole function more readable
+    // super init first
     if (!Scene::initWithPhysics()) {
         return false;
     }
+    // Get current map info
+    auto map_info = MapHelper::get_instance()->get_cur_map_info();
+    if (map_info.is_null)
+        return false;
+    log("map pos:{%d, %d}",
+        MapHelper::get_instance()->get_cur_map_pos()[0],
+        MapHelper::get_instance()->get_cur_map_pos()[1]);
+    //
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
-    // add Camera
+    // add CAMERA
     this->camera = Camera::create();
     camera->setTag(int(TAG::camera_node));
     camera->setPosition({ 0, 0 });
     this->addChild(camera);
-    // add Map
+    // add MAP
     this->map = Map::create("maps/base_room/base_room.tmx");
     map->setAnchorPoint({ 0, 0 });
     map->setPosition({ 0, 0 });
     map->setTag(int(TAG::camera_node));
+    // set DOORS
+    init_doors();
+    player_has_hit_on_door = false;
     // map->setGlobalZOrder(int(Order::ground));
     camera->addChild(map);
-    // scale camera by map width
+    // SCALE CAMERA by map width
     camera->scale_rate = visibleSize.width / map->getContentSize().width;
     camera->setScale(camera->scale_rate);
-    // add player
-    this->player = Player::create("Animation/player/Down/Character_Down1.png");
-    player->setAnchorPoint(player->default_anchor);
-    player->setPosition(dot(map->getContentSize(), { 0.1, 0.1 }));
-    player->setTag(int(TAG::player_node));
-    player->setGlobalZOrder(map->pos_to_order(player->getPosition()));
-    map->addChild(player);
-    player->die.connect(boost::bind(&GungeonWorld::when_game_end, this));
-    // Physics world
-    getPhysicsWorld()->setGravity({ 0, 0 });
-    // getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
-    // SHOT, DAMAGE, HP
-    set_bullet_listener();
-    player->hp = HP_LIMIT_PLAYER;
-    player->hp_limit = HP_LIMIT_PLAYER;
-    player->shot.connect(boost::bind(&GungeonWorld::add_bullet, this,
-        boost::placeholders::_1, boost::placeholders::_2,
-        boost::placeholders::_3, boost::placeholders::_4));
-    this->bullet_hit.connect(boost::bind(&GungeonWorld::on_bullet_hit, this,
-        boost::placeholders::_1, boost::placeholders::_2));
-    // Enemy
-    generate_enemies();
-    // set debugger
-    // set_debugger();
-    // make update() working
-    scheduleUpdate();
+
+    this->scene_running = false;
+    this->runAction(Sequence::createWithTwoActions(
+        DelayTime::create(SCENE_REPLACE_TIME + 0.25f),
+        CallFunc::create(boost::bind(&GungeonWorld::run_scene, this))));
+
     return true;
 }
 
 void GungeonWorld::update(float delta)
 {
+    if (!scene_running)
+        return;
     // update z-order
     if (player) {
         player->setLocalZOrder(map->pos_to_order(player->getPosition()));
     }
     // clean bullets
     clean_bullets();
+    // when this map CLEAR
+    // below will be triggered only once
+    auto map_info = MapHelper::get_instance()->get_cur_map_info();
+    if (enemies.empty() && !map_info.is_clear) {
+        log("map clear");
+        MapHelper::get_instance()->cur_map_clear();
+        // open all doors
+        for (auto d : all4dirs())
+            if (door_on[d])
+                map->set_door(d, true);
+    }
+    // check if player go into DOOR
+    if (map_info.is_clear && !player_has_hit_on_door) {
+        for (auto d : all4dirs()) {
+            // trick
+            if (door_on[d] && player->getBoundingBox().containsPoint(door_on[d]->getPosition())) {
+                player_has_hit_on_door = true;
+                player_hit_on_door(d);
+                break;
+            }
+        }
+    }
 }
 
 void GungeonWorld::set_debugger()
@@ -221,7 +237,7 @@ void GungeonWorld::on_bullet_hit(Bullet* bullet, Node* hit_node)
 
 void GungeonWorld::generate_enemies()
 {
-    // 9 ¸ö¿ÉÄÜ³ö¹ÖµÄÎ»ÖÃ,ÊÇµØÍ¼µÄµÈ·Öµã
+    // 9 ä¸ªå¯èƒ½å‡ºæ€ªçš„ä½ç½®,æ˜¯åœ°å›¾çš„ç­‰åˆ†ç‚¹
     auto& mn = ENEMY_GENERATE_POS;
     auto generate_points = std::vector<Vec2> {};
     for (int i : range(1, mn[0] + 1)) {
@@ -255,7 +271,7 @@ void GungeonWorld::generate_enemies()
         this->enemies.push_back(enemy);
     };
 
-    // ±£µ×³ö¹Ö
+    // ä¿åº•å‡ºæ€ª
     for (int i : range(ENEMY_GENERATE_LEAST)) {
         int j = RandomHelper::random_int(0, int(generate_points.size() - 1));
         auto point = generate_points[j];
@@ -263,7 +279,7 @@ void GungeonWorld::generate_enemies()
 
         add_one_enemy_on(point);
     }
-    // ÓĞ¼¸ÂÊ³ö¹Ö
+    // æœ‰å‡ ç‡å‡ºæ€ª
     for (auto& point : generate_points) {
         if (RandomHelper::random_real(0.0f, 1.0f) < ENEMY_GENERATE_PROB) {
             add_one_enemy_on(point);
@@ -287,6 +303,132 @@ void GungeonWorld::when_enemy_die(Enemy* e)
 {
     enemies.erase(std::remove(enemies.begin(), enemies.end(), e), enemies.end());
     this->removeChild(e);
+}
 
+void GungeonWorld::player_hit_on_door(DIR d)
+{
+    // mylog("hit on door" + v2s(d2v(d)));
+    auto map_info = MapHelper::get_instance()->get_cur_map_info();
+    if (map_info.is_clear && map_info.door_open[d] && this->door_on[d]) {
+        scene_running = false;
+        // TODO clear this scene
+        clean_bullets();
+
+        getEventDispatcher()->removeEventListenersForTarget(player);
+        player->stopAllActions();
+        // a trick here, but player do move, because no contact listen here
+        // and player has velocity
+        player->setVisible(false);
+
+        // change to next
+        MapHelper::get_instance()->go_to_map_on(d, player->hp, player->hp_limit);
+    }
+}
+
+void GungeonWorld::init_doors()
+{
+    auto map_info = MapHelper::get_instance()->get_cur_map_info();
+    auto map_size = map->getContentSize();
+    auto tile_size = map->getTileSize();
+    // TODO Bad Design
+    auto d2door = std::map<DIR, Vec2> {
+        { DIR::U,
+            dot(map_size, { 0.5, 1 }) + dot(tile_size, { 0, -2.5 }) },
+        { DIR::D,
+            dot(map_size, { 0.5, 0 }) + dot(tile_size, { 0, 1 }) },
+        { DIR::L,
+            dot(map_size, { 0, 0.5 }) + dot(tile_size, { 1, 0 }) },
+        { DIR::R,
+            dot(map_size, { 1, 0.5 }) + dot(tile_size, { -1, 0 }) }
+    };
+    for (DIR d : all4dirs()) {
+        map->set_door(d, false);
+        // add fake door
+        if (map_info.door_open[d]) {
+            auto door = Sprite::create(FilePath::fake_door);
+            door->setAnchorPoint({ 0, 0 });
+            door->setPosition(d2door[d]);
+            // door->setGlobalZOrder(100); // for debug
+            door->setVisible(false);
+            door_on[d] = door;
+            map->addChild(door);
+            // display the door only when map is clear and door exist
+            if (map_info.is_clear)
+                map->set_door(d, true);
+        } else {
+            door_on[d] = nullptr;
+        }
+        // display the door
+    }
+}
+
+void etg::GungeonWorld::init_player()
+{
+    auto cal_init_pos = [&](DIR cf /*come from*/) -> Vec2 {
+        auto map_size = map->getContentSize();
+        // TODO Bad Design
+        auto tile_size = map->getTileSize();
+        if (cf == DIR::U)
+            return dot(map_size, { 0.5, 1 }) + dot(tile_size, { 0, -3.5 });
+        if (cf == DIR::D)
+            return dot(map_size, { 0.5, 0 }) + dot(tile_size, { 0, 2 });
+        if (cf == DIR::L)
+            return dot(map_size, { 0, 0.5 }) + dot(tile_size, { 2, 0 });
+        if (cf == DIR::R)
+            return dot(map_size, { 1, 0.5 }) + dot(tile_size, { -2, 0 });
+
+        return dot(map_size, { 0.5, 0.5 });
+    };
+    // TODO set player position by come_from
+    this->player = Player::create(
+        //AutoPolygon::generatePolygon
+        ("Animation/player/Down/Character_Down1.png"));
+    player->setAnchorPoint(player->default_anchor);
+
+    auto come_from = MapHelper::get_instance()->get_hero_status().come_from;
+    player->setPosition(cal_init_pos(come_from));
+
+    player->setTag(int(TAG::player_node));
+    player->setGlobalZOrder(map->pos_to_order(player->getPosition()));
+    map->addChild(player);
+
+    player->die.connect(boost::bind(&GungeonWorld::when_game_end, this));
+
+    player->hp = HP_LIMIT_PLAYER;
+    player->hp_limit = HP_LIMIT_PLAYER;
+    player->shot.connect(boost::bind(&GungeonWorld::add_bullet, this,
+        boost::placeholders::_1, boost::placeholders::_2,
+        boost::placeholders::_3, boost::placeholders::_4));
+}
+
+void GungeonWorld::run_scene()
+{
+    // Get current map info
+    auto map_info = MapHelper::get_instance()->get_cur_map_info();
+
+    // add PLAYER
+    init_player();
+    // Physics world
+    getPhysicsWorld()->setGravity({ 0, 0 });
+    getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
+    // // SHOT, DAMAGE, HP
+    set_bullet_listener();
+    this->bullet_hit.connect(boost::bind(&GungeonWorld::on_bullet_hit, this,
+        boost::placeholders::_1, boost::placeholders::_2));
+    // ENEMY
+    if (!map_info.is_clear) {
+        if (map_info.type == MAP_TYPE::NORMAL) {
+            generate_enemies();
+        }
+        if (map_info.type == MAP_TYPE::BOSS) {
+            // TODO add a boss here
+            generate_enemies();
+        }
+    }
+    // set DEBUGGER
+    // set_debugger();
+    // make update() working
+    scene_running = true;
+    scheduleUpdate();
 }
 }
