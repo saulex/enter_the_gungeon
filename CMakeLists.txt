@@ -57,6 +57,7 @@ list(APPEND GAME_SOURCE
      Classes/Bullet.cpp
      Classes/Enemy.cpp
      Classes/MapHelper.cpp
+     Classes/StartScene.cpp
      )
 list(APPEND GAME_HEADER
      Classes/AppDelegate.h
@@ -69,6 +70,7 @@ list(APPEND GAME_HEADER
      Classes/Bullet.hpp
      Classes/Enemy.hpp
      Classes/MapHelper.hpp
+     Classes/StartScene.hpp
      )
 
 # ADD external libs

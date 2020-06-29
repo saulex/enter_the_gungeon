@@ -46,7 +46,25 @@ public:
         *player_bullet
         = "bullet/player_bullet.png",
         *enemy_bullet = "bullet/enemy_bullet.png",
-        *fake_door = "door/door.png";
+        *fake_door = "door/door.png",
+        *health_empty = "ui/health_empty.png",
+        *health_full = "ui/health_full.png",
+        *die_text = "ui/die.png",
+        *clearance = "ui/clear.png",
+
+        *start_scene_background = "ui/background.png",
+        *start_scene_title = "ui/title.png",
+        *play_button_normal = "ui/play_button_normal.png",
+        *play_button_click = "ui/play_button_click.png",
+
+        *shot_effect = "music/shot.wav",
+        *background_fight = "music/background_fight.wav",
+        *background_start = "music/background_start.wav",
+        *button_effect = "music/button.wav",
+        *enemy_die_effect = "music/enemy_die.wav",
+        *enemy_hurt_effect = "music/enemy_hurt.wav",
+        *reload_effect = "music/reload.wav",
+        *cross_hair = "ui/crosshair.png";
 };
 
 // correspond to base_room.tmx
@@ -70,7 +88,7 @@ const static int DAMAGE_PLAYER_BULLET = 1;
 const static int DAMAGE_ENEMY_BULLET = 1;
 // HP
 const static int HP_LIMIT_PLAYER = 6;
-const static int HP_LIMIT_ENEMY = 4;
+const static int HP_LIMIT_ENEMY = 6;
 // SHOT
 const static float SHOT_INTERVAL_ENEMY = 3.0f;
 const static float SHOT_DELAY_ENEMY = 0.5f; // shot delay in one round

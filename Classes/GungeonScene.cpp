@@ -29,7 +29,12 @@
 #include <MapHelper.hpp>
 #include <algorithm>
 
+#include <StartScene.hpp>
+
 using namespace cocos2d;
+
+#include "SimpleAudioEngine.h"
+using namespace CocosDenshion;
 
 namespace etg {
 
@@ -89,9 +94,16 @@ void GungeonWorld::update(float delta)
 {
     if (!scene_running)
         return;
-    // update z-order
     if (player) {
+        // update z-order
         player->setLocalZOrder(map->pos_to_order(player->getPosition()));
+        // todo
+        // display hp
+        for (int i : range(hp_points.size())) {
+            if (i >= player->hp) {
+                hp_points[i]->setTexture(FilePath::health_empty);
+            }
+        }
     }
     // clean bullets
     clean_bullets();
@@ -173,6 +185,8 @@ void GungeonWorld::add_bullet(
     int tag_fire_by,
     int damage)
 {
+    // TODO use signal
+    SimpleAudioEngine::getInstance()->playEffect(FilePath::shot_effect);
     if (tag_fire_by == int(TAG::player_node)) {
         auto bullet = Bullet::create(FilePath::player_bullet);
         bullet->vol = vol;
@@ -298,6 +312,43 @@ void GungeonWorld::generate_enemies()
     }
 }
 
+void GungeonWorld::setup_boss()
+{
+    // TODO simplify below
+    auto point = Vec2(map->getContentSize() / 2);
+    // Random name
+    auto& boss_name = ENEMY_NAMES[RandomHelper::random_int(
+        0, int(ENEMY_NAMES.size()) - 1)];
+
+    // TODO Bad Design
+    auto png_path = "Animation/Enemies/" + boss_name + "/Idle/"
+        + boss_name + "_Idle1.png";
+    // TODO don't know why AutoPolygon::generatePolygon don't work there
+    auto boss = Enemy::create(png_path);
+    boss->setName(boss_name);
+    //
+    boss->setScale(1.8f);
+    boss->setPosition(point);
+    boss->setTag(int(TAG::enemy_node));
+    // set player
+    boss->set_player(player);
+    player->die.connect(boost::bind(&Enemy::when_player_die, boss));
+    // enable shot
+    boss->shot_num = RandomHelper::random_int(10, 15); // TODO
+    boss->shot_interval = 1.0f;
+    boss->shot_delay = 0.1f;
+    boss->shot.connect(boost::bind(&GungeonWorld::add_bullet, this,
+        boost::placeholders::_1, boost::placeholders::_2,
+        boost::placeholders::_3, boost::placeholders::_4));
+    // set hp
+    boss->hp = HP_LIMIT_ENEMY * 30;
+    boss->hp_limit = HP_LIMIT_ENEMY * 30;
+    boss->die.connect(boost::bind(&GungeonWorld::when_enemy_die, this, boss));
+    // maintain
+    this->map->addChild(boss);
+    this->enemies.push_back(boss);
+}
+
 void GungeonWorld::when_game_end()
 {
     clean_bullets();
@@ -308,6 +359,19 @@ void GungeonWorld::when_game_end()
     }
     removeChild(player);
     player = nullptr;
+
+    auto die_text = Sprite::create(FilePath::die_text);
+    die_text->setAnchorPoint({ 0.5, 0.5 });
+    die_text->setPosition(Director::getInstance()->getVisibleSize() / 2);
+    this->addChild(die_text);
+    //runAction(Sequence::createWithTwoActions(
+    //    DelayTime::create(3.0f),
+    //    CallFunc::create([&]() {
+    //        Director::getInstance()->getOpenGLView()->setCursorVisible(true);
+    //        getEventDispatcher()->removeAllEventListeners();
+    //        this->removeFromParentAndCleanup(true);
+    //        Director::getInstance()->replaceScene(StartScene::createScene());
+    //    })));
 }
 
 void GungeonWorld::when_enemy_die(Enemy* e)
@@ -433,16 +497,51 @@ void GungeonWorld::run_scene()
         }
         if (map_info.type == MAP_TYPE::BOSS) {
             // TODO add a boss here
-            generate_enemies();
+            setup_boss();
         }
     }
     // camera move
     camera->add_mouse_listener();
+    // add cross hair
+    set_cross_hair();
+    // health points
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    auto hp_pos_start = Vec2({ 100, visibleSize.height - 100 });
+    auto hp_offset = Vec2(45, 0);
+    for (int i : range(player->hp_limit)) {
+        auto hp_point = Sprite::create(FilePath::health_full);
+        hp_point->setScale(4);
+        hp_point->setAnchorPoint({ 0.5, 0.5 });
+        hp_point->setPosition(hp_pos_start + i * hp_offset);
+        this->addChild(hp_point);
+        this->hp_points.push_back(hp_point);
+    }
     // set DEBUGGER
     // set_debugger();
     // make update() working
     scene_running = true;
 
     scheduleUpdate();
+}
+
+void GungeonWorld::set_cross_hair()
+{
+    cross_hair = Sprite::create(FilePath::cross_hair);
+    cross_hair->setScale(2.0);
+    cross_hair->setAnchorPoint({ 0.5, 0.5 });
+    cross_hair->setVisible(false);
+    this->addChild(cross_hair);
+
+    auto ml = EventListenerMouse::create();
+    ml->onMouseMove = [&](EventMouse* e) {
+        if (!cross_hair->isVisible()) {
+            Director::getInstance()->getOpenGLView()->setCursorVisible(false);
+            cross_hair->setVisible(true);
+        }
+        auto visibleSize = Director::getInstance()->getVisibleSize();
+        auto pos = e->getLocation();
+        cross_hair->setPosition(pos.x, visibleSize.height - pos.y);
+    };
+    getEventDispatcher()->addEventListenerWithSceneGraphPriority(ml, cross_hair);
 }
 }

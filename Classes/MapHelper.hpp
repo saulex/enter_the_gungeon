@@ -60,6 +60,8 @@ public:
     void cur_map_clear();
     void go_to_map_on(DIR dir, int hp, int hp_limit);
 
+    void reset();
+
 protected:
     static MapHelper* instance;
 
@@ -69,6 +71,7 @@ protected:
 
     const int width, height;
     void init_dungeon();
+    void init_audio();
 };
 
 };

@@ -1,6 +1,9 @@
 #include <Enemy.hpp>
 #include <random>
 
+#include "SimpleAudioEngine.h"
+using namespace CocosDenshion;
+
 namespace etg {
 
 // ========= EnemyAnimationHelper =========
@@ -73,8 +76,9 @@ Enemy::Enemy()
     , one_shot_round_over(true)
     , shot_num(SHOT_NUMBER_ENEMY)
 {
+    // todo
     shot_interval_timer = RandomHelper::random_real(
-        0.0f, 3 * SHOT_INTERVAL_ENEMY);
+        0.5f, 1.0f);
 }
 
 Enemy* Enemy::create(const std::string& filename)
@@ -223,6 +227,9 @@ void Enemy::fire_at_player()
         return;
     auto start = getPosition();
     auto offset = player->getPosition() - getPosition();
+    // random effect
+    offset = Vec2(offset.x * RandomHelper::random_real(0.8, 1.2),
+        offset.y * RandomHelper::random_real(0.8, 1.2));
     auto vol = dot(offset / offset.length(), SPEED_BULLET_ENEMY);
     shot(start,
         vol,
@@ -256,6 +263,9 @@ void Enemy::when_hurt(int damage)
     auto get_hurt_act = Sequence::create(
         CallFunc::create(stop_idle_anim),
         hit_act,
+        CallFunc::create([]() {
+            SimpleAudioEngine::getInstance()->playEffect(FilePath::enemy_hurt_effect);
+        }),
         idle_act,
         NULL);
 
@@ -270,9 +280,13 @@ void Enemy::when_die()
     this->removeAllComponents();
     log("die");
     auto sequence = Sequence::create(
-        Spawn::createWithTwoActions(
+        Spawn::create(
             FadeOut::create(0.5f),
-            ScaleBy::create(0.5f, 0.2f)),
+            ScaleBy::create(0.5f, 0.2f),
+            CallFunc::create([]() {
+                SimpleAudioEngine::getInstance()->playEffect(FilePath::enemy_die_effect);
+            }),
+            NULL),
         CallFunc::create([&]() { die(); }), // call parent to clean itself
         NULL);
     runAction(sequence);

@@ -73,6 +73,7 @@ protected:
     // enemy control
     std::vector<Enemy*> enemies;
     void generate_enemies();
+    void setup_boss();
     // game loop control
     void when_game_end();
     void when_enemy_die(Enemy* e);
@@ -85,6 +86,11 @@ protected:
     void init_player();
     void run_scene();
     bool scene_running;
+    // cross-hair
+    Sprite* cross_hair;
+    void set_cross_hair();
+    // health points
+    std::vector<Sprite*> hp_points;
 };
 
 }

@@ -3,6 +3,9 @@
 #include <my_utils.hpp>
 using namespace cocos2d;
 
+#include "SimpleAudioEngine.h"
+using namespace CocosDenshion;
+
 namespace etg {
 
 MapHelper* MapHelper::instance = nullptr;
@@ -14,6 +17,12 @@ MapHelper::MapHelper()
     init_dungeon();
     cur_map_pos = { 0, 0 };
     hero_status = HeroStatus();
+    // TODO ugly design
+    // audio
+    init_audio();
+    SimpleAudioEngine::getInstance()->stopBackgroundMusic();
+    SimpleAudioEngine::getInstance()->setBackgroundMusicVolume(0.2);
+    SimpleAudioEngine::getInstance()->playBackgroundMusic(FilePath::background_fight, true);
 }
 
 MapHelper::~MapHelper()
@@ -87,6 +96,13 @@ void MapHelper::go_to_map_on(DIR dir, int hp, int hp_limit)
         // TODO change scene
         Director::getInstance()->replaceScene(d2trans(dir));
     }
+}
+
+void MapHelper::reset()
+{
+    init_dungeon();
+    cur_map_pos = { 0, 0 };
+    hero_status = HeroStatus();
 }
 
 void MapHelper::init_dungeon()
@@ -169,6 +185,23 @@ void MapHelper::init_dungeon()
                 }
             }
         }
+    }
+}
+
+void MapHelper::init_audio()
+{
+    auto ae = SimpleAudioEngine::getInstance();
+    for (auto& audio_path : {
+             FilePath::shot_effect,
+             FilePath::button_effect,
+             FilePath::enemy_die_effect,
+             FilePath::enemy_hurt_effect,
+             FilePath::reload_effect }) {
+        ae->preloadEffect(audio_path);
+    }
+    for (auto& audio_path : {
+             FilePath::background_fight }) {
+        ae->preloadBackgroundMusic(audio_path);
     }
 }
 };
