@@ -95,7 +95,7 @@ protected:
 
     Vec2 mouse_offset; // for debug
 
-    void init_anm();
+    void init_anm(); // TODO Bad design
     void play_move_anm(DIR d);
     // shot listener
     void add_shot_listener();
