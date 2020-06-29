@@ -73,6 +73,7 @@ protected:
     // enemy control
     std::vector<Enemy*> enemies;
     void generate_enemies();
+    void setup_boss();
     // game loop control
     void when_game_end();
     void when_enemy_die(Enemy* e);

@@ -77,14 +77,14 @@ const static int DAMAGE_PLAYER_BULLET = 1;
 const static int DAMAGE_ENEMY_BULLET = 1;
 // HP
 const static int HP_LIMIT_PLAYER = 6;
-const static int HP_LIMIT_ENEMY = 4;
+const static int HP_LIMIT_ENEMY = 6;
 // SHOT
 const static float SHOT_INTERVAL_ENEMY = 3.0f;
 const static float SHOT_DELAY_ENEMY = 0.5f; // shot delay in one round
 const static float SHOT_INTERVAL_PLAYER = 0.4f;
 const static int SHOT_NUMBER_ENEMY = 3;
 // DUNGEON SIZE
-const static int DUNGEON_SIZE_WIDTH = 3;
+const static int DUNGEON_SIZE_WIDTH = 2;
 const static int DUNGEON_SIZE_HEIGHT = 3;
 // MAP TYPE
 enum class MAP_TYPE {

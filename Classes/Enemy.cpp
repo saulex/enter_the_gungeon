@@ -76,8 +76,9 @@ Enemy::Enemy()
     , one_shot_round_over(true)
     , shot_num(SHOT_NUMBER_ENEMY)
 {
+    // todo
     shot_interval_timer = RandomHelper::random_real(
-        0.0f, 3 * SHOT_INTERVAL_ENEMY);
+        0.5f, 1.0f);
 }
 
 Enemy* Enemy::create(const std::string& filename)
@@ -226,6 +227,9 @@ void Enemy::fire_at_player()
         return;
     auto start = getPosition();
     auto offset = player->getPosition() - getPosition();
+    // random effect
+    offset = Vec2(offset.x * RandomHelper::random_real(0.8, 1.2),
+        offset.y * RandomHelper::random_real(0.8, 1.2));
     auto vol = dot(offset / offset.length(), SPEED_BULLET_ENEMY);
     shot(start,
         vol,

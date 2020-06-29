@@ -303,6 +303,43 @@ void GungeonWorld::generate_enemies()
     }
 }
 
+void GungeonWorld::setup_boss()
+{
+    // TODO simplify below
+    auto point = Vec2(map->getContentSize() / 2);
+    // Random name
+    auto& boss_name = ENEMY_NAMES[RandomHelper::random_int(
+        0, int(ENEMY_NAMES.size()) - 1)];
+    
+    // TODO Bad Design
+    auto png_path = "Animation/Enemies/" + boss_name + "/Idle/"
+        + boss_name + "_Idle1.png";
+    // TODO don't know why AutoPolygon::generatePolygon don't work there
+    auto boss = Enemy::create(png_path);
+    boss->setName(boss_name);
+    //
+    boss->setScale(1.8f);
+    boss->setPosition(point);
+    boss->setTag(int(TAG::enemy_node));
+    // set player
+    boss->set_player(player);
+    player->die.connect(boost::bind(&Enemy::when_player_die, boss));
+    // enable shot
+    boss->shot_num = RandomHelper::random_int(10, 15); // TODO
+    boss->shot_interval = 1.0f;
+    boss->shot_delay = 0.1f;
+    boss->shot.connect(boost::bind(&GungeonWorld::add_bullet, this,
+        boost::placeholders::_1, boost::placeholders::_2,
+        boost::placeholders::_3, boost::placeholders::_4));
+    // set hp
+    boss->hp = HP_LIMIT_ENEMY * 30;
+    boss->hp_limit = HP_LIMIT_ENEMY * 30;
+    boss->die.connect(boost::bind(&GungeonWorld::when_enemy_die, this, boss));
+    // maintain
+    this->map->addChild(boss);
+    this->enemies.push_back(boss);
+}
+
 void GungeonWorld::when_game_end()
 {
     clean_bullets();
@@ -438,7 +475,7 @@ void GungeonWorld::run_scene()
         }
         if (map_info.type == MAP_TYPE::BOSS) {
             // TODO add a boss here
-            generate_enemies();
+            setup_boss();
         }
     }
     // camera move
