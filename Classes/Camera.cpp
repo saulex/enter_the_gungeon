@@ -16,7 +16,9 @@ bool Camera::init()
 void Camera::move_by(const Vec2& delta)
 {
     // 要让摄像头移动，相对地，要让其子物体向相反方向运动
-    myutl::move_by(this, -delta);
+    // myutl::move_by(this, -delta);
+    auto new_pos = this->getPosition() - delta;
+    this->setPosition(new_pos);
 }
 
 void Camera::add_mouse_listener()
@@ -46,6 +48,6 @@ void Camera::add_mouse_listener()
         last_mouse_pos = cur_pos;
         this->move_by(myutl::dot(relative_move, { 1, -1 }));
     };
-    getEventDispatcher()->addEventListenerWithFixedPriority(listener, 1);
+    getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener, this);
 }
 }

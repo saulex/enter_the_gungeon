@@ -3,6 +3,69 @@
 
 namespace etg {
 
+// ========= EnemyAnimationHelper =========
+
+EnemyAnimationHelper* EnemyAnimationHelper::instance = nullptr;
+
+EnemyAnimationHelper::EnemyAnimationHelper()
+{
+    for (auto& i : range(ENEMY_NAMES.size())) {
+        auto enemy_name = ENEMY_NAMES[i];
+        for (auto& anim_name : ENEMY_ANIM_NAMES) {
+
+            auto frame_n = 0;
+            if (anim_name == "Hit")
+                frame_n = ENEMY_HIT_FRAME_N[i];
+            if (anim_name == "Idle")
+                frame_n = ENEMY_IDLE_FRAME_N[i];
+
+            auto anim_info = animation_generator(
+                "Animation/Enemies/" + enemy_name + "/" + anim_name + "/",
+                anim_name,
+                // TODO Bad Design
+                0.1f, frame_n,
+                enemy_name + "_");
+
+            auto animation = anim_info.animation;
+            animation->retain();
+
+            if (anim_name == "Hit")
+                this->hit_anim_infos[enemy_name] = anim_info;
+            if (anim_name == "Idle")
+                this->idle_anim_infos[enemy_name] = anim_info;
+        }
+    }
+}
+
+EnemyAnimationHelper::~EnemyAnimationHelper()
+{
+    // TODO release hit_anim_infos, idle_anim_infos
+    delete instance;
+}
+
+EnemyAnimationHelper* EnemyAnimationHelper::get_instance()
+{
+    if (!instance)
+        instance = new EnemyAnimationHelper();
+    return instance;
+}
+
+AnimInfo EnemyAnimationHelper::get_anim_info(const std::string& enemy_name, const std::string& anim_name)
+{
+    if (anim_name == "Hit") {
+        if (hit_anim_infos.count(enemy_name)) {
+            return hit_anim_infos[enemy_name];
+        }
+    }
+    if (anim_name == "Idle") {
+        if (idle_anim_infos.count(enemy_name)) {
+            return idle_anim_infos[enemy_name];
+        }
+    }
+}
+
+// ========= Enemy =========
+
 Enemy::Enemy()
     : player(nullptr)
     , shot_interval(SHOT_INTERVAL_ENEMY)
@@ -38,18 +101,29 @@ Enemy* Enemy::create(const PolygonInfo& info)
 
 bool Enemy::init()
 {
-    // TODO Bad Design: Character should init physics body by itself.
+    // TODO Bad Design: Character should init physics body by itself. <- ?
     set_physics_body();
     set_contact_listener();
 
     move_speed = SPEED_MOVE_ENEMY; // 设置移动速度
     run_ai_move_logic();
+
     scheduleUpdate();
     return true;
 }
 
 void Enemy::update(float delta)
 {
+    // TODO Bad Design
+    // delay the "idle animation start" until update()
+    // so that user have his/her time to setName()
+    if (!getActionByTag(int(TAG::enemy_idle_anm)) && !getActionByTag(int(TAG::enemy_hit_anm))) {
+        auto idle_animation = EnemyAnimationHelper::get_instance()->get_anim_info(getName(), "Idle").animation;
+        auto idle_act = RepeatForever::create(Animate::create(idle_animation));
+        idle_act->setTag(int(TAG::enemy_idle_anm));
+        runAction(idle_act);
+    }
+    //
     if (player && shot_interval_timer < 0 && one_shot_round_over) {
         auto sequence_shot_v = Vector<FiniteTimeAction*>();
 
@@ -164,18 +238,27 @@ void Enemy::when_player_die()
 void Enemy::when_hurt(int damage)
 {
     // hurt animation is not stoppable
-    if (getActionByTag(int(TAG::enemy_hurt_anm)))
+    if (getActionByTag(int(TAG::enemy_hit_anm)))
         return;
+    // Hit
+    auto hit_animation = EnemyAnimationHelper::get_instance()->get_anim_info(getName(), "Hit").animation;
+    auto hit_act = Animate::create(hit_animation);
+    hit_act->setTag(int(TAG::enemy_hit_anm));
+    // Idle
+    auto idle_animation = EnemyAnimationHelper::get_instance()->get_anim_info(getName(), "Idle").animation;
+    auto idle_act = RepeatForever::create(Animate::create(idle_animation));
+    idle_act->setTag(int(TAG::enemy_idle_anm));
+
+    auto stop_idle_anim = [&]() {
+        stopActionByTag(int(TAG::enemy_idle_anm));
+    };
 
     auto get_hurt_act = Sequence::create(
-        TintBy::create(0.25f,
-            0, -255, -255),
-        TintBy::create(0.25f,
-            0, -255, -255)
-            ->reverse(),
+        CallFunc::create(stop_idle_anim),
+        hit_act,
+        idle_act,
         NULL);
 
-    get_hurt_act->setTag(int(TAG::enemy_hurt_anm));
     runAction(get_hurt_act);
 }
 

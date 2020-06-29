@@ -65,7 +65,7 @@ bool GungeonWorld::init()
     this->map = Map::create("maps/base_room/base_room.tmx");
     map->setAnchorPoint({ 0, 0 });
     map->setPosition({ 0, 0 });
-    map->setTag(int(TAG::camera_node));
+    map->setTag(int(TAG::map_node));
     // set DOORS
     init_doors();
     player_has_hit_on_door = false;
@@ -74,7 +74,9 @@ bool GungeonWorld::init()
     // SCALE CAMERA by map width
     camera->scale_rate = visibleSize.width / map->getContentSize().width;
     camera->setScale(camera->scale_rate);
-
+    // LOAD ENEMY ANIMATION, a trick
+    EnemyAnimationHelper::get_instance();
+    // RUN SCENE delay
     this->scene_running = false;
     this->runAction(Sequence::createWithTwoActions(
         DelayTime::create(SCENE_REPLACE_TIME + 0.25f),
@@ -249,8 +251,17 @@ void GungeonWorld::generate_enemies()
     }
 
     auto add_one_enemy_on = [&](const Vec2& point) {
-        auto enemy = Enemy::create(AutoPolygon::generatePolygon(
-            "Animation/enemy/slime/default.png"));
+        // Random name
+        auto& enemy_name = ENEMY_NAMES[RandomHelper::random_int(
+            0, int(ENEMY_NAMES.size()) - 1)];
+        mylog(enemy_name);
+        // TODO Bad Design
+        auto png_path = "Animation/Enemies/" + enemy_name + "/Idle/"
+            + enemy_name + "_Idle1.png";
+        // TODO don't know why AutoPolygon::generatePolygon don't work there
+        auto enemy = Enemy::create(png_path);
+        enemy->setName(enemy_name);
+        //
         enemy->setScale(0.5);
         enemy->setPosition(point);
         enemy->setTag(int(TAG::enemy_node));
@@ -319,7 +330,8 @@ void GungeonWorld::player_hit_on_door(DIR d)
         // a trick here, but player do move, because no contact listen here
         // and player has velocity
         player->setVisible(false);
-
+        // stop camera listener
+        getEventDispatcher()->removeEventListenersForTarget(camera);
         // change to next
         MapHelper::get_instance()->go_to_map_on(d, player->hp, player->hp_limit);
     }
@@ -405,12 +417,11 @@ void GungeonWorld::run_scene()
 {
     // Get current map info
     auto map_info = MapHelper::get_instance()->get_cur_map_info();
-
     // add PLAYER
     init_player();
     // Physics world
     getPhysicsWorld()->setGravity({ 0, 0 });
-    getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
+    // getPhysicsWorld()->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL);
     // // SHOT, DAMAGE, HP
     set_bullet_listener();
     this->bullet_hit.connect(boost::bind(&GungeonWorld::on_bullet_hit, this,
@@ -425,10 +436,13 @@ void GungeonWorld::run_scene()
             generate_enemies();
         }
     }
+    // camera move
+    camera->add_mouse_listener();
     // set DEBUGGER
     // set_debugger();
     // make update() working
     scene_running = true;
+
     scheduleUpdate();
 }
 }

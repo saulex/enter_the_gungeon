@@ -18,7 +18,8 @@ enum class TAG {
     enemy_node,
     enemy_body,
     enemy_anm,
-    enemy_hurt_anm,
+    enemy_hit_anm,
+    enemy_idle_anm,
 
     bullet_node,
     wall_node,
@@ -85,6 +86,62 @@ enum class MAP_TYPE {
 };
 // time between map change
 const static float SCENE_REPLACE_TIME = 1.0f;
+// enemy animations
+const static std::vector<std::string> ENEMY_NAMES = {
+    "Bat",
+    "Bee",
+    "BlueBird",
+    "Bunny",
+    "Chameleon",
+    "Chicken",
+    "Duck",
+    "FatBird",
+    "Ghost",
+    "Mushroom",
+    "Plant",
+    "Rino",
+    "Slime",
+    "Snail"
+};
+
+const static std::vector<int> ENEMY_HIT_FRAME_N = {
+    5, //"Bat",
+    5, //"Bee",
+    5, //"BlueBird",
+    5, //"Bunny",
+    5, //"Chameleon",
+    5, //"Chicken",
+    5, //"Duck",
+    5, //"FatBird",
+    5, //"Ghost",
+    5, //"Mushroom",
+    5, //"Plant",
+    5, //"Rino",
+    5, //"Slime",
+    5 //"Snail"
+};
+
+const static std::vector<int> ENEMY_IDLE_FRAME_N = {
+    7, //"Bat",
+    6, //"Bee",
+    9, //"BlueBird",
+    8, //"Bunny",
+    13, //"Chameleon",
+    13, //"Chicken",
+    10, //"Duck",
+    8, //"FatBird",
+    10, //"Ghost",
+    14, //"Mushroom",
+    11, //"Plant",
+    11, //"Rino",
+    10, //"Slime",
+    15 //"Snail"
+};
+
+const static std::vector<std::string> ENEMY_ANIM_NAMES = {
+    "Hit",
+    "Idle"
+};
 }
 
 #endif //_ETG_CONFIG_HPP_

@@ -14,6 +14,22 @@ using namespace cocos2d;
 
 namespace etg {
 
+class EnemyAnimationHelper {
+protected:
+    EnemyAnimationHelper();
+    ~EnemyAnimationHelper();
+    static EnemyAnimationHelper* instance;
+
+public:
+    static EnemyAnimationHelper* get_instance();
+    AnimInfo get_anim_info(const std::string& enemy_name,
+        const std::string& anim_name);
+
+protected:
+    std::map<std::string, AnimInfo>
+        hit_anim_infos, idle_anim_infos;
+};
+
 class Enemy : public Character {
 public:
     CREATE_FUNC(Enemy);
