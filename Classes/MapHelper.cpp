@@ -98,6 +98,13 @@ void MapHelper::go_to_map_on(DIR dir, int hp, int hp_limit)
     }
 }
 
+void MapHelper::reset()
+{
+    init_dungeon();
+    cur_map_pos = { 0, 0 };
+    hero_status = HeroStatus();
+}
+
 void MapHelper::init_dungeon()
 {
     // init vector, all null map

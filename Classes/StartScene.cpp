@@ -2,6 +2,7 @@
 #include <StartScene.hpp>
 #include <config.hpp>
 #include <my_utils.hpp>
+#include <MapHelper.hpp>
 
 #include "ui/CocosGUI.h"
 

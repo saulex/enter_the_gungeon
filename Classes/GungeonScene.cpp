@@ -29,6 +29,8 @@
 #include <MapHelper.hpp>
 #include <algorithm>
 
+#include <StartScene.hpp>
+
 using namespace cocos2d;
 
 #include "SimpleAudioEngine.h"
@@ -92,9 +94,16 @@ void GungeonWorld::update(float delta)
 {
     if (!scene_running)
         return;
-    // update z-order
     if (player) {
+        // update z-order
         player->setLocalZOrder(map->pos_to_order(player->getPosition()));
+        // todo
+        // display hp
+        for (int i : range(hp_points.size())) {
+            if (i >= player->hp) {
+                hp_points[i]->setTexture(FilePath::health_empty);
+            }
+        }
     }
     // clean bullets
     clean_bullets();
@@ -350,6 +359,19 @@ void GungeonWorld::when_game_end()
     }
     removeChild(player);
     player = nullptr;
+
+    auto die_text = Sprite::create(FilePath::die_text);
+    die_text->setAnchorPoint({ 0.5, 0.5 });
+    die_text->setPosition(Director::getInstance()->getVisibleSize() / 2);
+    this->addChild(die_text);
+    //runAction(Sequence::createWithTwoActions(
+    //    DelayTime::create(3.0f),
+    //    CallFunc::create([&]() {
+    //        Director::getInstance()->getOpenGLView()->setCursorVisible(true);
+    //        getEventDispatcher()->removeAllEventListeners();
+    //        this->removeFromParentAndCleanup(true);
+    //        Director::getInstance()->replaceScene(StartScene::createScene());
+    //    })));
 }
 
 void GungeonWorld::when_enemy_die(Enemy* e)
@@ -482,6 +504,18 @@ void GungeonWorld::run_scene()
     camera->add_mouse_listener();
     // add cross hair
     set_cross_hair();
+    // health points
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    auto hp_pos_start = Vec2({ 100, visibleSize.height - 100 });
+    auto hp_offset = Vec2(45, 0);
+    for (int i : range(player->hp_limit)) {
+        auto hp_point = Sprite::create(FilePath::health_full);
+        hp_point->setScale(4);
+        hp_point->setAnchorPoint({ 0.5, 0.5 });
+        hp_point->setPosition(hp_pos_start + i * hp_offset);
+        this->addChild(hp_point);
+        this->hp_points.push_back(hp_point);
+    }
     // set DEBUGGER
     // set_debugger();
     // make update() working

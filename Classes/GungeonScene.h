@@ -89,6 +89,8 @@ protected:
     // cross-hair
     Sprite* cross_hair;
     void set_cross_hair();
+    // health points
+    std::vector<Sprite*> hp_points;
 };
 
 }
