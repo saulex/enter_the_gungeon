@@ -46,7 +46,14 @@ public:
         *player_bullet
         = "bullet/player_bullet.png",
         *enemy_bullet = "bullet/enemy_bullet.png",
-        *fake_door = "door/door.png";
+        *fake_door = "door/door.png",
+
+        *shot_effect = "music/shot.wav",
+        *background_fight = "music/background_fight.wav",
+        *button_effect = "music/button.wav",
+        *enemy_die_effect = "music/enemy_die.wav",
+        *enemy_hurt_effect = "music/enemy_hurt.wav",
+        *reload_effect = "reload.wav";
 };
 
 // correspond to base_room.tmx

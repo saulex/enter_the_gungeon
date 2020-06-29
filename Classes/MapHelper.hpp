@@ -69,6 +69,7 @@ protected:
 
     const int width, height;
     void init_dungeon();
+    void init_audio();
 };
 
 };

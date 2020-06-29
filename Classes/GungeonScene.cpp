@@ -31,6 +31,9 @@
 
 using namespace cocos2d;
 
+#include "SimpleAudioEngine.h"
+using namespace CocosDenshion;
+
 namespace etg {
 
 Scene* GungeonWorld::createScene()
@@ -173,6 +176,8 @@ void GungeonWorld::add_bullet(
     int tag_fire_by,
     int damage)
 {
+    // TODO use signal
+    SimpleAudioEngine::getInstance()->playEffect(FilePath::shot_effect);
     if (tag_fire_by == int(TAG::player_node)) {
         auto bullet = Bullet::create(FilePath::player_bullet);
         bullet->vol = vol;

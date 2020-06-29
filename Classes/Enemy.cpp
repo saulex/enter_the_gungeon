@@ -1,6 +1,9 @@
 #include <Enemy.hpp>
 #include <random>
 
+#include "SimpleAudioEngine.h"
+using namespace CocosDenshion;
+
 namespace etg {
 
 // ========= EnemyAnimationHelper =========
@@ -256,6 +259,9 @@ void Enemy::when_hurt(int damage)
     auto get_hurt_act = Sequence::create(
         CallFunc::create(stop_idle_anim),
         hit_act,
+        CallFunc::create([]() {
+            SimpleAudioEngine::getInstance()->playEffect(FilePath::enemy_hurt_effect);
+        }),
         idle_act,
         NULL);
 
@@ -270,9 +276,13 @@ void Enemy::when_die()
     this->removeAllComponents();
     log("die");
     auto sequence = Sequence::create(
-        Spawn::createWithTwoActions(
+        Spawn::create(
             FadeOut::create(0.5f),
-            ScaleBy::create(0.5f, 0.2f)),
+            ScaleBy::create(0.5f, 0.2f),
+            CallFunc::create([]() {
+                SimpleAudioEngine::getInstance()->playEffect(FilePath::enemy_die_effect);
+            }),
+            NULL),
         CallFunc::create([&]() { die(); }), // call parent to clean itself
         NULL);
     runAction(sequence);
