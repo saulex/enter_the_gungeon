@@ -86,6 +86,9 @@ protected:
     void init_player();
     void run_scene();
     bool scene_running;
+    // cross-hair
+    Sprite* cross_hair;
+    void set_cross_hair();
 };
 
 }

@@ -310,7 +310,7 @@ void GungeonWorld::setup_boss()
     // Random name
     auto& boss_name = ENEMY_NAMES[RandomHelper::random_int(
         0, int(ENEMY_NAMES.size()) - 1)];
-    
+
     // TODO Bad Design
     auto png_path = "Animation/Enemies/" + boss_name + "/Idle/"
         + boss_name + "_Idle1.png";
@@ -480,11 +480,34 @@ void GungeonWorld::run_scene()
     }
     // camera move
     camera->add_mouse_listener();
+    // add cross hair
+    set_cross_hair();
     // set DEBUGGER
     // set_debugger();
     // make update() working
     scene_running = true;
 
     scheduleUpdate();
+}
+
+void GungeonWorld::set_cross_hair()
+{
+    cross_hair = Sprite::create(FilePath::cross_hair);
+    cross_hair->setScale(2.0);
+    cross_hair->setAnchorPoint({ 0.5, 0.5 });
+    cross_hair->setVisible(false);
+    this->addChild(cross_hair);
+
+    auto ml = EventListenerMouse::create();
+    ml->onMouseMove = [&](EventMouse* e) {
+        if (!cross_hair->isVisible()) {
+            Director::getInstance()->getOpenGLView()->setCursorVisible(false);
+            cross_hair->setVisible(true);
+        }
+        auto visibleSize = Director::getInstance()->getVisibleSize();
+        auto pos = e->getLocation();
+        cross_hair->setPosition(pos.x, visibleSize.height - pos.y);
+    };
+    getEventDispatcher()->addEventListenerWithSceneGraphPriority(ml, cross_hair);
 }
 }
